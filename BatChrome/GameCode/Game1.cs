@@ -17,6 +17,15 @@ namespace BatChrome
         Playing
     }
 
+    enum SelectedEasing
+    {
+        None,
+        Linear,
+        Quintic,
+        Bounce,
+        BouncePlusRandom
+    }
+
     public class Game1 : Game
     {
         public static readonly Random RNG = new Random();
@@ -34,7 +43,8 @@ namespace BatChrome
 
         private Rectangle _screenRes;
 
-        private bool isColoured;
+        private bool _isColoured;
+        private SelectedEasing _selectedEasing;
 
         private Texture2D _brickTex;
         private Texture2D _ballTex;
@@ -61,10 +71,11 @@ namespace BatChrome
             _screenRes = GraphicsDevice.Viewport.Bounds;
 
             _gameState = GameState.Starting;
-            _launchDelay = 3f;
+            _launchDelay = 2f;
             _launchTimer = _launchDelay;
 
-            isColoured = false;
+            _isColoured = false;
+            _selectedEasing = SelectedEasing.None;
 
             gridTL = new Point(100, 50);
             gridSpacing = new Point(50, 32);
@@ -88,37 +99,126 @@ namespace BatChrome
             InitLevel();
         }
 
+        private void ResetDIPs()
+        {
+            _isColoured = false;
+            _selectedEasing = SelectedEasing.None;
+        }
+
         private void InitLevel()
         {
             _gameState = GameState.LaunchingLevel;
+            InitBat();
+            InitBricks();
+        }
 
-            #region Load Bricks
-
-            bat = new Bat(new Point(_screenRes.Center.X, _screenRes.Bottom - 64), Content.Load<Texture2D>(@"Art/bat"),
-                _screenRes);
-
-            bat = new Bat(new Point(_screenRes.Center.X, 0), Content.Load<Texture2D>(@"Art/bat"),
-                _screenRes);
-            _tweener.TweenTo<Bat, Vector2>(target: bat, expression: tbat => bat.Position,
-                    toValue: new Vector2(_screenRes.Center.X, _screenRes.Bottom - 64), duration: 1, delay: 0)
-                .Easing(EasingFunctions.Linear);
-
-            if (isColoured) bat.Tint = Palette.GetColor(0);
-
-            for (var i = 0; i < gridSize.Y; i++)
+        private void InitBricks()
+        {
+            if (_selectedEasing == SelectedEasing.None)
             {
-                brickGrid.Add(new List<GameObject>());
-                for (var j = 0; j < gridSize.X; j++)
+                for (var i = 0; i < gridSize.Y; i++)
                 {
-                    var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
-                    brickGrid[i].Add(new GameObject(loc, _brickTex));
-                    if (isColoured)
-                        brickGrid[i].Last().Tint = Palette.GetRandom(2);
+                    brickGrid.Add(new List<GameObject>());
+                    for (var j = 0; j < gridSize.X; j++)
+                    {
+                        var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
+                        var newBrick = new GameObject(loc, _brickTex);
+                        if (_isColoured) newBrick.Tint = Palette.GetRandom(2);
+
+                        brickGrid[i].Add(newBrick);
+                    }
+                }
+            }
+            else
+            {
+                for (var i = 0; i < gridSize.Y; i++)
+                {
+                    brickGrid.Add(new List<GameObject>());
+                    for (var j = 0; j < gridSize.X; j++)
+                    {
+                        var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
+                        var newBrick = new GameObject(new Point(loc.X, -32), _brickTex);
+                        if (_isColoured) newBrick.Tint = Palette.GetRandom(2);
+
+                        switch (_selectedEasing)
+                        {
+                            case SelectedEasing.None:
+                                throw new ArgumentOutOfRangeException();
+                            case SelectedEasing.Linear:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick, expression: tBrick => newBrick.Position,
+                                        toValue: loc.ToVector2(), duration: 1, delay: 0)
+                                    .Easing(EasingFunctions.Linear);
+                                break;
+                            case SelectedEasing.Quintic:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick, expression: tBrick => newBrick.Position,
+                                        toValue: loc.ToVector2(), duration: 1, delay: 0)
+                                    .Easing(EasingFunctions.QuinticIn);
+                                break;
+                            case SelectedEasing.Bounce:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick, expression: tBrick => newBrick.Position,
+                                        toValue: loc.ToVector2(), duration: 1, delay: 0)
+                                    .Easing(EasingFunctions.BounceOut);
+                                break;
+                            case SelectedEasing.BouncePlusRandom:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick, expression: tBrick => newBrick.Position,
+                                    toValue: loc.ToVector2(), duration: 1, delay: (float) RNG.NextDouble())
+                                    .Easing(EasingFunctions.BounceOut);
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+
+                        brickGrid[i].Add(newBrick);
+                    }
                 }
             }
 
-            #endregion
+        }
 
+        private void InitBat()
+        {
+            if (_selectedEasing == SelectedEasing.None)
+            {
+                bat = new Bat(new Point(_screenRes.Center.X, _screenRes.Bottom - 64),
+                    Content.Load<Texture2D>(@"Art/bat"),
+                    _screenRes);
+            }
+            else
+            {
+                bat = new Bat(new Point(_screenRes.Center.X, _screenRes.Bottom + 64), Content.Load<Texture2D>(@"Art/bat"),
+                    _screenRes);
+
+                switch (_selectedEasing)
+                {
+                    case SelectedEasing.None:
+                        throw new ArgumentOutOfRangeException();
+                    case SelectedEasing.Linear:
+                        _tweener.TweenTo<Bat, Vector2>(target: bat, expression: tbat => bat.Position,
+                                toValue: new Vector2(_screenRes.Center.X, _screenRes.Bottom - 64), duration: 1, delay: 0)
+                            .Easing(EasingFunctions.Linear);
+                        break;
+                    case SelectedEasing.Quintic:
+                        _tweener.TweenTo<Bat, Vector2>(target: bat, expression: tbat => bat.Position,
+                                toValue: new Vector2(_screenRes.Center.X, _screenRes.Bottom - 64), duration: 1, delay: 0)
+                            .Easing(EasingFunctions.QuinticIn);
+                        break;
+                    case SelectedEasing.Bounce:
+                        _tweener.TweenTo<Bat, Vector2>(target: bat, expression: tbat => bat.Position,
+                                toValue: new Vector2(_screenRes.Center.X, _screenRes.Bottom - 64), duration: 1, delay: 0)
+                            .Easing(EasingFunctions.BounceOut);
+                        break;
+                    case SelectedEasing.BouncePlusRandom:
+                        _tweener.TweenTo<Bat, Vector2>(target: bat, expression: tbat => bat.Position,
+                                toValue: new Vector2(_screenRes.Center.X, _screenRes.Bottom - 64), duration: 1,
+                                delay: (float) RNG.NextDouble())
+                            .Easing(EasingFunctions.BounceOut);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            if (_isColoured) bat.Tint = Palette.GetColor(0);
         }
 
         protected override void Update(GameTime gameTime)
@@ -141,7 +241,7 @@ namespace BatChrome
                         _gameState = GameState.Playing;
                         _launchTimer = _launchDelay;
                         balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes));
-                        if (isColoured) balls.Last().Tint = Palette.GetColor(1);
+                        if (_isColoured) balls.Last().Tint = Palette.GetColor(1);
                     }
                     break;
                 case GameState.Playing:
@@ -199,7 +299,37 @@ namespace BatChrome
 
             if (kb.WasKeyJustDown(Keys.NumPad0)) Reset();
 
+            if (kb.WasKeyJustDown(Keys.Back))
+            {
+                ResetDIPs();
+                Reset();
+            }
+
             if (kb.WasKeyJustDown(Keys.NumPad1)) ColourEverything();
+
+            if (kb.WasKeyJustDown(Keys.NumPad2))
+            {
+                _selectedEasing = SelectedEasing.Linear;
+                Reset();
+            }
+
+            if (kb.WasKeyJustDown(Keys.NumPad3))
+            {
+                _selectedEasing = SelectedEasing.Quintic;
+                Reset();
+            }
+
+            if (kb.WasKeyJustDown(Keys.NumPad4))
+            {
+                _selectedEasing = SelectedEasing.Bounce;
+                Reset();
+            }
+
+            if (kb.WasKeyJustDown(Keys.NumPad5))
+            {
+                _selectedEasing = SelectedEasing.BouncePlusRandom;
+                Reset();
+            }
         }
 
         private void Reset()
@@ -230,7 +360,7 @@ namespace BatChrome
                 }
             }
 
-            isColoured = true;
+            _isColoured = true;
         }
 
         protected override void Draw(GameTime gameTime)
