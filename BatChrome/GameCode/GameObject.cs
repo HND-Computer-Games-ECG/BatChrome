@@ -11,7 +11,7 @@ namespace BatChrome
     class GameObject : Primitive
     {
         private Texture2D _art;
-        private Color _tint;
+        public Color Tint { get; set; }
 
         public GameObject() : base () { }
 
@@ -22,12 +22,12 @@ namespace BatChrome
             : base(new Rectangle(position, art.Bounds.Size), rotation)
         {
             _art = art;
-            _tint = tint;
+            Tint = tint;
         }
 
         public void Draw(SpriteBatch sb)
         {
-            sb.Draw(_art, Position, null, _tint, Rotation, RotOffset, 1, SpriteEffects.None, 1);
+            sb.Draw(_art, Position, null, Tint, Rotation, RotOffset, 1, SpriteEffects.None, 1);
             //sb.Draw(Game1.Pixel, CollRect, Color.Red * 0.25f);
         }
     }
