@@ -91,7 +91,8 @@ namespace BatChrome
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            Pixel = Content.Load<Texture2D>(@"Art/pixel");
+            Pixel = new Texture2D(GraphicsDevice, 1, 1);
+            Pixel.SetData(new[] {Color.White});
 
             _brickTex = Content.Load<Texture2D>(@"Art/brick");
             _ballTex = Content.Load<Texture2D>(@"Art/ball");
