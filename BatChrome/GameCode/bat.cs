@@ -18,12 +18,18 @@ namespace BatChrome
             Speed = new Vector2(700);
         }
 
-        public override void Update(GameTime gt)
+        public void Update(GameTime gt, bool smoothing)
         {
             var destination = MathHelper.Clamp(MouseExtended.GetState().X, minX, maxX);
-            var stretch = Math.Abs(Position.X - destination);
 
-            Destination = new Vector2(destination, Position.Y);
+            if (smoothing)
+            {
+                Destination = new Vector2(destination, Position.Y);
+            }
+            else
+            {
+                Position = new Vector2(destination, Position.Y);
+            }
 
             base.Update(gt);
         }

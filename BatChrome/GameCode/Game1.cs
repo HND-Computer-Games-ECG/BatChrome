@@ -45,6 +45,7 @@ namespace BatChrome
 
         private bool _isColoured;
         private SelectedEasing _selectedEasing;
+        private bool _smoothBat;
 
         private Texture2D _brickTex;
         private Texture2D _ballTex;
@@ -86,6 +87,7 @@ namespace BatChrome
 
             _isColoured = false;
             _selectedEasing = SelectedEasing.None;
+            _smoothBat = false;
 
             gridTL = new Point(100, 50);
             gridSpacing = new Point(50, 32);
@@ -114,6 +116,7 @@ namespace BatChrome
         {
             _isColoured = false;
             _selectedEasing = SelectedEasing.None;
+            _smoothBat = false;
         }
 
         private void InitLevel()
@@ -277,7 +280,7 @@ namespace BatChrome
 
         private void DoPlaying(GameTime gameTime)
         {
-            bat.Update(gameTime);
+            bat.Update(gameTime, _smoothBat);
 
             foreach (var ball in balls)
             {
@@ -352,6 +355,12 @@ namespace BatChrome
                 _selectedEasing = SelectedEasing.BouncePlusRandom;
                 Reset();
             }
+
+            if (kb.WasKeyJustDown(Keys.NumPad6))
+            {
+                _smoothBat = true;
+            }
+
         }
 
         private void Reset()
