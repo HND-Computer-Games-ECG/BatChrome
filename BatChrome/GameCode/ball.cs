@@ -8,7 +8,7 @@ namespace BatChrome
 {
     class Ball : GameObject
     {
-        private Vector2 oldPos;
+        private Vector2 _oldPos;
 
         private Vector2 _velocity;
         private Rectangle _screenBounds;
@@ -19,10 +19,10 @@ namespace BatChrome
             _screenBounds = new Rectangle(screenRect.Left + art.Width / 2, screenRect.Top + art.Height / 2,
                 screenRect.Right - art.Width, screenRect.Bottom - art.Height);
 
-            oldPos = Position;
+            _oldPos = Position;
         }
 
-        public void Update(GameTime gt)
+        public override void Update(GameTime gt)
         {
             Position += _velocity;
 
@@ -36,19 +36,19 @@ namespace BatChrome
                 ReverseY();
             }
 
-            oldPos = Position;
+            _oldPos = Position;
         }
 
         public void ReverseX()
         {
             _velocity.X *= -1;
-            Position = oldPos;
+            Position = _oldPos;
         }
 
         public void ReverseY()
         {
             _velocity.Y *= -1;
-            Position = oldPos;
+            Position = _oldPos;
         }
     }
 }

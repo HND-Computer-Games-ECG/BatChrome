@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended;
 using SharpDX.Direct2D1;
 using SpriteBatch = Microsoft.Xna.Framework.Graphics.SpriteBatch;
 
@@ -11,6 +13,11 @@ namespace BatChrome
     class GameObject : Primitive
     {
         private Texture2D _art;
+        private float _destinationSnap;
+
+        public Vector2 Destination { get; set; }
+        public Vector2 Speed { get; set; }
+
         public Color Tint { get; set; }
 
         public GameObject() : base () { }
@@ -23,11 +30,29 @@ namespace BatChrome
         {
             _art = art;
             Tint = tint;
+
+            Destination = Position;
+            _destinationSnap = 1f;
+            Speed = Vector2.One;
+        }
+
+        public virtual void Update(GameTime gt)
+        {
+            if (Destination == Position) return;
+
+            var distance = (Destination - Position);
+            var direction = distance.NormalizedCopy();
+            var delta = direction * Speed * (float) gt.ElapsedGameTime.TotalSeconds;
+
+            if (delta.Length() > distance.Length())
+                Position = Destination;
+            else
+                Position += direction * Speed * (float) gt.ElapsedGameTime.TotalSeconds;
         }
 
         public void Draw(SpriteBatch sb)
         {
-            sb.Draw(_art, Position, null, Tint, Rotation, RotOffset, 1, SpriteEffects.None, 1);
+            sb.Draw(_art, CollRect, Tint);
             //sb.Draw(Game1.Pixel, CollRect, Color.Red * 0.25f);
         }
     }

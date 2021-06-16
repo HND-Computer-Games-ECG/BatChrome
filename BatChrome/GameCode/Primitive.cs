@@ -15,6 +15,8 @@ namespace BatChrome
         private Vector2 _rotationOffset;
         private Vector2 _position;
 
+        public float Stretch { get; set; }
+
         // Public Properties
         public Vector2 Position
         {
@@ -27,6 +29,7 @@ namespace BatChrome
         }
 
         public Rectangle CollRect => _rectangle;
+
         public Vector2 RotOffset => _rotationOffset;
 
         public float Rotation { get; set; }
