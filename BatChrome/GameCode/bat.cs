@@ -15,21 +15,25 @@ namespace BatChrome
         {
             minX = screenRect.Left + art.Width / 2;
             maxX = screenRect.Right - art.Width / 2;
-            Speed = new Vector2(700);
+            Speed = new Vector2(900);
         }
 
-        public void Update(GameTime gt, bool smoothing)
+        public void Update(GameTime gt, bool smoothing, bool jelly)
         {
             var destination = MathHelper.Clamp(MouseExtended.GetState().X, minX, maxX);
 
-            if (smoothing)
+            if (jelly)
             {
-                Destination = new Vector2(destination, Position.Y);
+                var baseStretch = Math.Abs(Position.X - destination) / 256;
+                Stretch = new Vector2(baseStretch, -baseStretch);
             }
             else
-            {
+                Stretch = Vector2.Zero;
+
+            if (smoothing)
+                Destination = new Vector2(destination, Position.Y);
+            else
                 Position = new Vector2(destination, Position.Y);
-            }
 
             base.Update(gt);
         }

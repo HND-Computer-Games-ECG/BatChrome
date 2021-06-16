@@ -13,10 +13,11 @@ namespace BatChrome
     class GameObject : Primitive
     {
         private Texture2D _art;
-        private float _destinationSnap;
 
         public Vector2 Destination { get; set; }
         public Vector2 Speed { get; set; }
+
+        public Vector2 Stretch { get; set; }
 
         public Color Tint { get; set; }
 
@@ -32,7 +33,6 @@ namespace BatChrome
             Tint = tint;
 
             Destination = Position;
-            _destinationSnap = 1f;
             Speed = Vector2.One;
         }
 
@@ -52,7 +52,16 @@ namespace BatChrome
 
         public void Draw(SpriteBatch sb)
         {
-            sb.Draw(_art, CollRect, Tint);
+            var currRect = CollRect;
+            var newWidth = currRect.Width * MathHelper.Clamp(1 + Stretch.X, 0.25f, 1.75f);
+            var newHeight = currRect.Height * MathHelper.Clamp(1 + Stretch.Y, 0.25f, 1.75f);
+
+            currRect.Offset((CollRect.Width - newWidth)/2, (CollRect.Height - newHeight)/2);
+
+            currRect.Width = (int) newWidth;
+            currRect.Height = (int) newHeight;
+
+            sb.Draw(_art, currRect, Tint);
             //sb.Draw(Game1.Pixel, CollRect, Color.Red * 0.25f);
         }
     }

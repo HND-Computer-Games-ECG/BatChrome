@@ -42,23 +42,44 @@ namespace BatChrome
         private float _launchTimer;
 
         private Rectangle _screenRes;
+        private Vector2 _uiTL;
 
+        private string[] _uiText =
+        {
+            "Bsp: Reset",
+            "NP0: Refresh",
+            "NP1: Colour",
+            "NP2: Linear",
+            "NP3: Quintic",
+            "NP4: Bounce",
+            "NP5: Random",
+            "NP6: Smooth",
+            "NP7: Jelly",
+        };
+
+        #region DIPs
         private bool _isColoured;
         private SelectedEasing _selectedEasing;
         private bool _smoothBat;
+        private bool _jellyBat;
+        #endregion
 
+        #region Art Sources
         private Texture2D _brickTex;
         private Texture2D _ballTex;
+        private SpriteFont _uiFont;
 
         public static Texture2D Pixel;
+        #endregion
 
+        #region GameObjects
         private Bat bat;
         private List<Ball> balls;
 
         private Point gridTL, gridSpacing, gridSize;
         private List<List<GameObject>> brickGrid;
 
-        private readonly int[,] LEVEL1 = new int[,]
+        private readonly int[,] LEVEL1 = 
         {
             { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
             { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -67,6 +88,8 @@ namespace BatChrome
             { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
             { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
         };
+        #endregion
+
 
         public Game1()
         {
@@ -80,14 +103,13 @@ namespace BatChrome
         protected override void Initialize()
         {
             _screenRes = GraphicsDevice.Viewport.Bounds;
+            _uiTL = new Vector2(8, _screenRes.Bottom - 64);
 
             _gameState = GameState.Starting;
             _launchDelay = 2f;
             _launchTimer = _launchDelay;
 
-            _isColoured = false;
-            _selectedEasing = SelectedEasing.None;
-            _smoothBat = false;
+            ResetDIPs();
 
             gridTL = new Point(100, 50);
             gridSpacing = new Point(50, 32);
@@ -108,6 +130,7 @@ namespace BatChrome
 
             _brickTex = Content.Load<Texture2D>(@"Art/brick");
             _ballTex = Content.Load<Texture2D>(@"Art/ball");
+            _uiFont = Content.Load<SpriteFont>("PixelFont");
 
             InitLevel();
         }
@@ -117,6 +140,7 @@ namespace BatChrome
             _isColoured = false;
             _selectedEasing = SelectedEasing.None;
             _smoothBat = false;
+            _jellyBat = false;
         }
 
         private void InitLevel()
@@ -280,7 +304,7 @@ namespace BatChrome
 
         private void DoPlaying(GameTime gameTime)
         {
-            bat.Update(gameTime, _smoothBat);
+            bat.Update(gameTime, _smoothBat, _jellyBat);
 
             foreach (var ball in balls)
             {
@@ -322,13 +346,13 @@ namespace BatChrome
                 #endregion
             }
 
-            if (kb.WasKeyJustDown(Keys.NumPad0)) Reset();
-
             if (kb.WasKeyJustDown(Keys.Back))
             {
                 ResetDIPs();
                 Reset();
             }
+
+            if (kb.WasKeyJustDown(Keys.NumPad0)) Reset();
 
             if (kb.WasKeyJustDown(Keys.NumPad1)) ColourEverything();
 
@@ -361,13 +385,17 @@ namespace BatChrome
                 _smoothBat = true;
             }
 
+            if (kb.WasKeyJustDown(Keys.NumPad7))
+            {
+                _jellyBat = true;
+            }
+
         }
 
         private void Reset()
         {
             brickGrid.Clear();
             balls.Clear();
-
 
             InitLevel();
         }
@@ -417,6 +445,15 @@ namespace BatChrome
                 ball.Draw(_spriteBatch);
             }
             #endregion
+
+            int i, x = 0, y = 0;
+            for (i = 0; i < 3; i++, y++)
+                _spriteBatch.DrawString(_uiFont, _uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
+            for (x += 80, y = 0; i < 7; i++, y++)
+                _spriteBatch.DrawString(_uiFont, _uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
+            for (x += 80, y = 0; i < 9; i++, y++)
+                _spriteBatch.DrawString(_uiFont, _uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
+
 
             _spriteBatch.End();
 
