@@ -311,6 +311,7 @@ namespace BatChrome
                                 ball.ReverseY();
 
                             brickGrid[i].RemoveAt(j);
+                            break;
                         }
                     }
                 }
