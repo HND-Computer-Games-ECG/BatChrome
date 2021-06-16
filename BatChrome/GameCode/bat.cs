@@ -15,7 +15,7 @@ namespace BatChrome
         {
             minX = screenRect.Left + art.Width / 2;
             maxX = screenRect.Right - art.Width / 2;
-            Speed = new Vector2(900);
+            Speed = new Vector2(900, 32);
         }
 
         public void Update(GameTime gt, bool smoothing, bool jelly)
@@ -31,7 +31,7 @@ namespace BatChrome
                 Stretch = Vector2.Zero;
 
             if (smoothing)
-                Destination = new Vector2(destination, Position.Y);
+                Destination = new Vector2(destination, Destination.Y);
             else
                 Position = new Vector2(destination, Position.Y);
 

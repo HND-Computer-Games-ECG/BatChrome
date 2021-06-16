@@ -26,6 +26,17 @@ namespace BatChrome
                 _rectangle.Location = (_position - _rotationOffset).ToPoint();
             }
         }
+
+        public Vector2 Displace
+        {
+            get => _position;
+            set
+            {
+                _position = value;
+                _rectangle.Location = (_position - _rotationOffset).ToPoint();
+            }
+        }
+
         public Vector2 Destination { get; set; }
 
         public Rectangle CollRect => _rectangle;

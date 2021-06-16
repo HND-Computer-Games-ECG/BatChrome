@@ -24,14 +24,16 @@ namespace BatChrome
         Linear,
         Quintic,
         Bounce,
-        BouncePlusRandom
+        BouncePlusRandom,
+        Length
     }
 
     enum SelectedSoundFX
     {
         None,
         Simple,
-        Better
+        Better,
+        Length
     }
 
     public class Game1 : Game
@@ -52,26 +54,14 @@ namespace BatChrome
         private Rectangle _screenRes;
         private Vector2 _uiTL;
 
-        private string[] _uiText =
-        {
-            "Bsp: Reset",
-            "NP0: Refresh",
-            "NP1: Colour",
-            "NP2: Linear",
-            "NP3: Quintic",
-            "NP4: Bounce",
-            "NP5: Random",
-            "NP6: Smooth",
-            "NP7: Jelly",
-        };
-
         #region DIPs
         private bool _isColoured;
+        private SelectedSoundFX _selectedFX;
+        private int _hitTone;
         private SelectedEasing _selectedEasing;
         private bool _smoothBat;
         private bool _jellyBat;
-        private SelectedSoundFX _selectedFX;
-        private int _hitTone;
+        private bool _batStagger;
         #endregion
 
         #region Art Sources
@@ -149,6 +139,7 @@ namespace BatChrome
 
             for (int i = 0; i < 4; i++)
                 _hitsFX.Add(Content.Load<SoundEffect>(@"FX/pingpong_" + i));
+            _hitsFX.Add(Content.Load<SoundEffect>(@"FX/correct"));
 
             InitLevel();
         }
@@ -160,6 +151,7 @@ namespace BatChrome
             _smoothBat = false;
             _jellyBat = false;
             _selectedFX = SelectedSoundFX.None;
+            _batStagger = false;
         }
 
         private void InitLevel()
@@ -299,7 +291,7 @@ namespace BatChrome
                     break;
                 case SelectedSoundFX.Better:
                     _hitsFX[_hitTone].Play();
-                    if (_hitTone < 3)
+                    if (_hitTone < _hitsFX.Count - 1)
                         _hitTone++;
                     break;
                 default:
@@ -365,7 +357,7 @@ namespace BatChrome
                 if (_selectedFX == SelectedSoundFX.None)
                     ball.Update(gameTime, null);
                 else
-                    ball.Update(gameTime, _hitsFX[0]);
+                    ball.Update(gameTime, _hitsFX[_hitTone]);
 
                 #region bat / ball collision
 
@@ -375,7 +367,11 @@ namespace BatChrome
                     if (overlap.Width < overlap.Height)
                         ball.ReverseX();
                     else
+                    {
+                        if (_batStagger)
+                            bat.Displace += (bat.Position-ball.Position).NormalizedCopy() * 16;
                         ball.ReverseY();
+                    }
 
                     batHit();
                 }
@@ -418,47 +414,29 @@ namespace BatChrome
             if (kb.WasKeyJustDown(Keys.NumPad1)) ColourEverything();
 
             if (kb.WasKeyJustDown(Keys.NumPad2))
-            {
-                _selectedEasing = SelectedEasing.Linear;
-                Reset();
-            }
+                _selectedFX = (SelectedSoundFX) ((int) (_selectedFX + 1) % (int) SelectedSoundFX.Length);
 
             if (kb.WasKeyJustDown(Keys.NumPad3))
             {
-                _selectedEasing = SelectedEasing.Quintic;
+                _selectedEasing = (SelectedEasing) ((int) (_selectedEasing + 1) % (int) SelectedEasing.Length);
                 Reset();
             }
 
             if (kb.WasKeyJustDown(Keys.NumPad4))
             {
-                _selectedEasing = SelectedEasing.Bounce;
-                Reset();
+                _smoothBat = !_smoothBat;
+                if (!_smoothBat)
+                    _batStagger = false;
             }
 
             if (kb.WasKeyJustDown(Keys.NumPad5))
             {
-                _selectedEasing = SelectedEasing.BouncePlusRandom;
-                Reset();
-            }
-
-            if (kb.WasKeyJustDown(Keys.NumPad6))
-            {
-                _smoothBat = !_smoothBat;
-            }
-
-            if (kb.WasKeyJustDown(Keys.NumPad7))
-            {
                 _jellyBat = !_jellyBat;
             }
 
-            if (kb.WasKeyJustDown(Keys.NumPad8))
+            if (_smoothBat && kb.WasKeyJustDown(Keys.NumPad6))
             {
-                _selectedFX = SelectedSoundFX.Simple;
-            }
-
-            if (kb.WasKeyJustDown(Keys.NumPad9))
-            {
-                _selectedFX = SelectedSoundFX.Better;
+                _batStagger = !_batStagger;
             }
 
             #endregion
@@ -519,14 +497,38 @@ namespace BatChrome
             }
             #endregion
 
+            string[] uiText =
+            {
+                "Bsp: Reset",
+                "NP0: Refresh",
+                "NP1: Colour",
+                "NP2: Sound-",
+                "NP3: Easing-",
+                "NP4: Smooth-",
+                "NP5: Jelly-",
+                "NP6: Stagger-",
+            };
+
             int i, x = 0, y = 0;
             for (i = 0; i < 3; i++, y++)
-                _spriteBatch.DrawString(_uiFont, _uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
-            for (x += 80, y = 0; i < 7; i++, y++)
-                _spriteBatch.DrawString(_uiFont, _uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
-            for (x += 80, y = 0; i < 9; i++, y++)
-                _spriteBatch.DrawString(_uiFont, _uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
+                _spriteBatch.DrawString(_uiFont, uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
 
+            x += 80; y = 0;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedFX, _uiTL + new Vector2(x, y), Color.White);
+
+            y += _uiFont.LineSpacing;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedEasing, _uiTL + new Vector2(x, y), Color.White);
+
+            y += _uiFont.LineSpacing;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _smoothBat, _uiTL + new Vector2(x, y), Color.White);
+
+            y += _uiFont.LineSpacing;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _jellyBat, _uiTL + new Vector2(x, y), Color.White);
+
+            y += _uiFont.LineSpacing;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _batStagger, _uiTL + new Vector2(x, y), Color.White);
+
+            // x += 170; y = 0;
 
             _spriteBatch.End();
 

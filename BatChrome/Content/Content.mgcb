@@ -50,6 +50,12 @@
 /processorParam:TextureFormat=Color
 /build:Art/brick.png
 
+#begin FX/correct.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:FX/correct.wav
+
 #begin FX/pingpong_0.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor

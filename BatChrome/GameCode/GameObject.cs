@@ -46,14 +46,14 @@ namespace BatChrome
             if (delta.Length() > distance.Length())
                 Position = Destination;
             else
-                Position += direction * Speed * (float) gt.ElapsedGameTime.TotalSeconds;
+                Displace += direction * Speed * (float) gt.ElapsedGameTime.TotalSeconds;
         }
 
         public void Draw(SpriteBatch sb)
         {
             var currRect = CollRect;
-            var newWidth = currRect.Width * MathHelper.Clamp(1 + Stretch.X, 0.25f, 1.75f);
-            var newHeight = currRect.Height * MathHelper.Clamp(1 + Stretch.Y, 0.25f, 1.75f);
+            var newWidth = currRect.Width * MathHelper.Clamp(1 + Stretch.X, 0.50f, 1.50f);
+            var newHeight = currRect.Height * MathHelper.Clamp(1 + Stretch.Y, 0.50f, 1.50f);
 
             currRect.Offset((CollRect.Width - newWidth)/2, (CollRect.Height - newHeight)/2);
 
