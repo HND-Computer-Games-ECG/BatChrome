@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
@@ -24,6 +25,13 @@ namespace BatChrome
         Quintic,
         Bounce,
         BouncePlusRandom
+    }
+
+    enum SelectedSoundFX
+    {
+        None,
+        Simple,
+        Better
     }
 
     public class Game1 : Game
@@ -62,6 +70,8 @@ namespace BatChrome
         private SelectedEasing _selectedEasing;
         private bool _smoothBat;
         private bool _jellyBat;
+        private SelectedSoundFX _selectedFX;
+        private int _hitTone;
         #endregion
 
         #region Art Sources
@@ -71,6 +81,8 @@ namespace BatChrome
 
         public static Texture2D Pixel;
         #endregion
+
+        private List<SoundEffect> _hitsFX;
 
         #region GameObjects
         private Bat bat;
@@ -109,6 +121,9 @@ namespace BatChrome
             _launchDelay = 2f;
             _launchTimer = _launchDelay;
 
+            _hitsFX = new List<SoundEffect>();
+            _hitTone = 0;
+
             ResetDIPs();
 
             gridTL = new Point(100, 50);
@@ -132,6 +147,9 @@ namespace BatChrome
             _ballTex = Content.Load<Texture2D>(@"Art/ball");
             _uiFont = Content.Load<SpriteFont>("PixelFont");
 
+            for (int i = 0; i < 4; i++)
+                _hitsFX.Add(Content.Load<SoundEffect>(@"FX/pingpong_" + i));
+
             InitLevel();
         }
 
@@ -141,6 +159,7 @@ namespace BatChrome
             _selectedEasing = SelectedEasing.None;
             _smoothBat = false;
             _jellyBat = false;
+            _selectedFX = SelectedSoundFX.None;
         }
 
         private void InitLevel()
@@ -269,6 +288,41 @@ namespace BatChrome
             if (_isColoured) bat.Tint = Palette.GetColor(0);
         }
 
+        void brickHit()
+        {
+            switch (_selectedFX)
+            {
+                case SelectedSoundFX.None:
+                    break;
+                case SelectedSoundFX.Simple:
+                    _hitsFX[0].Play();
+                    break;
+                case SelectedSoundFX.Better:
+                    _hitsFX[_hitTone].Play();
+                    if (_hitTone < 3)
+                        _hitTone++;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        void batHit()
+        {
+            switch (_selectedFX)
+            {
+                case SelectedSoundFX.None:
+                    break;
+                case SelectedSoundFX.Simple:
+                case SelectedSoundFX.Better:
+                    _hitTone = 0;
+                    _hitsFX[_hitTone].Play();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
         protected override void Update(GameTime gameTime)
         {
             kb = KeyboardExtended.GetState();
@@ -308,7 +362,10 @@ namespace BatChrome
 
             foreach (var ball in balls)
             {
-                ball.Update(gameTime);
+                if (_selectedFX == SelectedSoundFX.None)
+                    ball.Update(gameTime, null);
+                else
+                    ball.Update(gameTime, _hitsFX[0]);
 
                 #region bat / ball collision
 
@@ -319,6 +376,8 @@ namespace BatChrome
                         ball.ReverseX();
                     else
                         ball.ReverseY();
+
+                    batHit();
                 }
 
                 #endregion
@@ -338,6 +397,7 @@ namespace BatChrome
                                 ball.ReverseY();
 
                             brickGrid[i].RemoveAt(j);
+                            brickHit();
                             break;
                         }
                     }
@@ -346,6 +406,7 @@ namespace BatChrome
                 #endregion
             }
 
+            #region Key handlers
             if (kb.WasKeyJustDown(Keys.Back))
             {
                 ResetDIPs();
@@ -382,13 +443,25 @@ namespace BatChrome
 
             if (kb.WasKeyJustDown(Keys.NumPad6))
             {
-                _smoothBat = true;
+                _smoothBat = !_smoothBat;
             }
 
             if (kb.WasKeyJustDown(Keys.NumPad7))
             {
-                _jellyBat = true;
+                _jellyBat = !_jellyBat;
             }
+
+            if (kb.WasKeyJustDown(Keys.NumPad8))
+            {
+                _selectedFX = SelectedSoundFX.Simple;
+            }
+
+            if (kb.WasKeyJustDown(Keys.NumPad9))
+            {
+                _selectedFX = SelectedSoundFX.Better;
+            }
+
+            #endregion
 
         }
 

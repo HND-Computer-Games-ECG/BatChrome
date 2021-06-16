@@ -50,6 +50,30 @@
 /processorParam:TextureFormat=Color
 /build:Art/brick.png
 
+#begin FX/pingpong_0.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:FX/pingpong_0.wav
+
+#begin FX/pingpong_1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:FX/pingpong_1.wav
+
+#begin FX/pingpong_2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:FX/pingpong_2.wav
+
+#begin FX/pingpong_3.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:FX/pingpong_3.wav
+
 #begin PixelFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor

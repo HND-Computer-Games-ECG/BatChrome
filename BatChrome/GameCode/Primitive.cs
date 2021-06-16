@@ -15,8 +15,6 @@ namespace BatChrome
         private Vector2 _rotationOffset;
         private Vector2 _position;
 
-        public float Stretch { get; set; }
-
         // Public Properties
         public Vector2 Position
         {
@@ -24,9 +22,11 @@ namespace BatChrome
             set
             {
                 _position = value;
+                Destination = _position;
                 _rectangle.Location = (_position - _rotationOffset).ToPoint();
             }
         }
+        public Vector2 Destination { get; set; }
 
         public Rectangle CollRect => _rectangle;
 

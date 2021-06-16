@@ -14,7 +14,6 @@ namespace BatChrome
     {
         private Texture2D _art;
 
-        public Vector2 Destination { get; set; }
         public Vector2 Speed { get; set; }
 
         public Vector2 Stretch { get; set; }
