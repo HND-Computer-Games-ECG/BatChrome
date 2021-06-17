@@ -15,18 +15,23 @@ namespace BatChrome
 
         public Vector2 Stretch { get; set; }
 
-        public Color Tint { get; set; }
+        public Color _tint;
 
         public GameObject() : base () { }
 
         public GameObject(Point position, Texture2D art, float rotation = 0) 
             : this(position, art, rotation, Color.White) { }
 
+        public virtual void SetTint(Color col)
+        {
+            _tint = col;
+        }
+
         public GameObject(Point position, Texture2D art, float rotation, Color tint) 
             : base(new Rectangle(position, art.Bounds.Size), rotation)
         {
             _art = art;
-            Tint = tint;
+            _tint = tint;
 
             Destination = Position;
             Speed = Vector2.One;
@@ -59,7 +64,7 @@ namespace BatChrome
 
             currRect.Offset(RotOffset);
 
-            sb.Draw(_art, currRect, null, Tint, Rotation, RotOffset, SpriteEffects.None, 1);
+            sb.Draw(_art, currRect, null, _tint, Rotation, RotOffset, SpriteEffects.None, 1);
             //sb.Draw(Game1.Pixel, CollRect, Color.Red * 0.25f);
         }
     }

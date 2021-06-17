@@ -9,7 +9,9 @@ namespace BatChrome
 {
     class Ball : GameObject
     {
-        private Color _flashColour;
+        public bool Flash { get; set; }
+        private Color _baseColour;
+        private float _flashAmount;
 
         public bool Jelly { get; set; }
         private float _rotationSpeed;
@@ -21,9 +23,17 @@ namespace BatChrome
         private Vector2 _velocity;
         private Rectangle _screenBounds;
 
-        public Ball(Point position, Texture2D art, Rectangle screenRect, bool jelly) : base(position, art)
+        public override void SetTint(Color col)
         {
-            _flashColour = Tint;
+            _baseColour = col;
+            base.SetTint(col);
+        }
+
+        public Ball(Point position, Texture2D art, Rectangle screenRect, bool jelly, bool flash) : base(position, art)
+        {
+            Flash = flash;
+            _baseColour = _tint;
+            _flashAmount = 0;
 
             Jelly = jelly;
             _rotationSpeed = 0;
@@ -37,6 +47,15 @@ namespace BatChrome
 
         public void Update(GameTime gt, SoundEffect wallHit)
         {
+            if (_flashAmount > 0)
+            {
+                _flashAmount = MathHelper.Clamp(_flashAmount - (float) gt.ElapsedGameTime.TotalSeconds * 4, 0, 1);
+                var r = MathHelper.Lerp(_baseColour.R, Color.White.R, _flashAmount);
+                var g = MathHelper.Lerp(_baseColour.G, Color.White.G, _flashAmount);
+                var b = MathHelper.Lerp(_baseColour.B, Color.White.B, _flashAmount);
+                _tint = new Color((int) r, (int) g, (int) b);
+            }
+
             Position += _velocity * (float) gt.ElapsedGameTime.TotalSeconds;
 
             if (Position.X < _screenBounds.Left || Position.X > _screenBounds.Right)
@@ -84,6 +103,9 @@ namespace BatChrome
 
         private void Reversal(float newRotSpeed)
         {
+            if (Flash)
+                _flashAmount = 1;
+
             _rotationSpeed = newRotSpeed;
             Position = _oldPos;
             if (Jelly)

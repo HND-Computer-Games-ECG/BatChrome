@@ -63,6 +63,7 @@ namespace BatChrome
         private bool _jellyBat;
         private bool _batStagger;
         private bool _jellyBall;
+        private bool _flashyBall;
         #endregion
 
         #region Art Sources
@@ -154,6 +155,7 @@ namespace BatChrome
             _selectedFX = SelectedSoundFX.None;
             _batStagger = false;
             _jellyBall = false;
+            _flashyBall = false;
         }
 
         private void InitLevel()
@@ -176,7 +178,7 @@ namespace BatChrome
                         {
                             var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
                             var newBrick = new GameObject(loc, _brickTex);
-                            if (_isColoured) newBrick.Tint = Palette.GetRandom(2);
+                            if (_isColoured) newBrick.SetTint(Palette.GetRandom(2));
 
                             brickGrid[i].Add(newBrick);
                         }
@@ -194,7 +196,7 @@ namespace BatChrome
                         {
                             var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
                             var newBrick = new GameObject(new Point(loc.X, -32), _brickTex);
-                            if (_isColoured) newBrick.Tint = Palette.GetRandom(2);
+                            if (_isColoured) newBrick.SetTint(Palette.GetRandom(2));
 
                             switch (_selectedEasing)
                             {
@@ -279,7 +281,7 @@ namespace BatChrome
                 }
             }
 
-            if (_isColoured) bat.Tint = Palette.GetColor(0);
+            if (_isColoured) bat.SetTint(Palette.GetColor(0));
         }
 
         void brickHit()
@@ -336,8 +338,8 @@ namespace BatChrome
                     {
                         _gameState = GameState.Playing;
                         _launchTimer = _launchDelay;
-                        balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _jellyBall));
-                        if (_isColoured) balls.Last().Tint = Palette.GetColor(1);
+                        balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _jellyBall, _flashyBall));
+                        if (_isColoured) balls.Last().SetTint(Palette.GetColor(1));
                     }
                     break;
                 case GameState.Playing:
@@ -443,6 +445,13 @@ namespace BatChrome
                     ball.Jelly = _jellyBall;
             }
 
+            if (kb.WasKeyJustDown(Keys.NumPad8))
+            {
+                _flashyBall = !_flashyBall;
+                foreach (var ball in balls)
+                    ball.Flash = _flashyBall;
+            }
+
             #endregion
 
         }
@@ -459,18 +468,18 @@ namespace BatChrome
         {
             var usedList = 0;
 
-            bat.Tint = Palette.GetColor(usedList++);
+            bat.SetTint(Palette.GetColor(usedList++));
 
             foreach (var ball in balls)
             {
-                ball.Tint = Palette.GetColor(usedList++);
+                ball.SetTint(Palette.GetColor(usedList++));
             }
 
             foreach (var brickLine in brickGrid)
             {
                 foreach (var brick in brickLine)
                 {
-                    brick.Tint = Palette.GetRandom(usedList);
+                    brick.SetTint(Palette.GetRandom(usedList));
                 }
             }
 
@@ -512,7 +521,7 @@ namespace BatChrome
                 "NP5: Jellybat-",
                 "NP6: Stagger-",
                 "NP7: Jellyball-",
-
+                "NP8: Flashyball-",
             };
 
             int i, x = 0, y = 0;
@@ -536,6 +545,9 @@ namespace BatChrome
 
             x += 170; y = 0;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _jellyBall, _uiTL + new Vector2(x, y), Color.White);
+
+            y += _uiFont.LineSpacing;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _flashyBall, _uiTL + new Vector2(x, y), Color.White);
 
             _spriteBatch.End();
 
