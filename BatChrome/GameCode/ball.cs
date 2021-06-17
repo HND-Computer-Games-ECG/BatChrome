@@ -9,12 +9,43 @@ namespace BatChrome
 {
     class Ball : GameObject
     {
+        class TrailItem : Primitive
+        {
+            private static Texture2D _art;
+            private Color _tint;
+            private float _alpha;
+
+            public bool IsDead()
+            {
+                return (_alpha <= 0);
+            }
+
+            public TrailItem() : base () { }
+
+            public TrailItem(Point position, Texture2D art, float rotation, Color tint) 
+                : base(new Rectangle(position.X, position.Y, art.Width, art.Height), rotation)
+            {
+                _art = art;
+                _tint = tint;
+                _alpha = 0.1f;
+            }
+
+            public void Draw(SpriteBatch sb, GameTime gt)
+            {
+                _alpha = MathHelper.Clamp(_alpha - (float) gt.ElapsedGameTime.TotalSeconds / 16, 0, 1);
+                sb.Draw(_art, CollRect, null, _tint * _alpha, Rotation, RotOffset, SpriteEffects.None, 1);
+            }
+        }
+
         public bool Flash { get; set; }
         private Color _baseColour;
         private float _flashAmount;
 
         public bool Jelly { get; set; }
         private float _rotationSpeed;
+
+        public bool Trail { get; set; }
+        private List<TrailItem> trails;
 
         public Vector2 Velocity => _velocity;
 
@@ -29,14 +60,17 @@ namespace BatChrome
             base.SetTint(col);
         }
 
-        public Ball(Point position, Texture2D art, Rectangle screenRect, bool jelly, bool flash) : base(position, art)
+        public Ball(Point position, Texture2D art, Rectangle screenRect, bool jelly, bool flash, bool trail) : base(position, art)
         {
             Flash = flash;
-            _baseColour = _tint;
+            _baseColour = Tint;
             _flashAmount = 0;
 
             Jelly = jelly;
             _rotationSpeed = 0;
+
+            Trail = trail;
+            trails = new List<TrailItem>();
 
             _velocity = new Vector2(200, -200);
             _screenBounds = new Rectangle(screenRect.Left + art.Width / 2, screenRect.Top + art.Height / 2,
@@ -47,13 +81,16 @@ namespace BatChrome
 
         public void Update(GameTime gt, SoundEffect wallHit)
         {
+            if (Trail)
+                trails.Add(new TrailItem((Position + RotOffset).ToPoint(), Art, Rotation, Tint));
+
             if (_flashAmount > 0)
             {
                 _flashAmount = MathHelper.Clamp(_flashAmount - (float) gt.ElapsedGameTime.TotalSeconds * 4, 0, 1);
                 var r = MathHelper.Lerp(_baseColour.R, Color.White.R, _flashAmount);
                 var g = MathHelper.Lerp(_baseColour.G, Color.White.G, _flashAmount);
                 var b = MathHelper.Lerp(_baseColour.B, Color.White.B, _flashAmount);
-                _tint = new Color((int) r, (int) g, (int) b);
+                Tint = new Color((int) r, (int) g, (int) b);
             }
 
             Position += _velocity * (float) gt.ElapsedGameTime.TotalSeconds;
@@ -87,6 +124,23 @@ namespace BatChrome
                 Rotation = 0;
 
             _oldPos = Position;
+        }
+
+        public void Draw(SpriteBatch sb, GameTime gt)
+        {
+            for (var i = trails.Count - 1; i >= 0; i--)
+            {
+                if (trails[i].IsDead())
+                    trails.RemoveAt(i);
+                else
+                    trails[i].Draw(sb, gt);
+            }
+            foreach (var trailItem in trails)
+            {
+                trailItem.Draw(sb, gt);
+            }
+
+            base.Draw(sb);
         }
 
         public void ReverseX()

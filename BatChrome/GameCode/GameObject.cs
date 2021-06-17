@@ -9,29 +9,29 @@ namespace BatChrome
 {
     class GameObject : Primitive
     {
-        private Texture2D _art;
+        protected readonly Texture2D Art;
 
-        public Vector2 Speed { get; set; }
+        protected Vector2 Speed { get; set; }
 
-        public Vector2 Stretch { get; set; }
+        protected Vector2 Stretch { get; set; }
 
-        public Color _tint;
+        protected Color Tint;
 
         public GameObject() : base () { }
+
+        public virtual void SetTint(Color col)
+        {
+            Tint = col;
+        }
 
         public GameObject(Point position, Texture2D art, float rotation = 0) 
             : this(position, art, rotation, Color.White) { }
 
-        public virtual void SetTint(Color col)
-        {
-            _tint = col;
-        }
-
         public GameObject(Point position, Texture2D art, float rotation, Color tint) 
             : base(new Rectangle(position, art.Bounds.Size), rotation)
         {
-            _art = art;
-            _tint = tint;
+            Art = art;
+            Tint = tint;
 
             Destination = Position;
             Speed = Vector2.One;
@@ -64,7 +64,7 @@ namespace BatChrome
 
             currRect.Offset(RotOffset);
 
-            sb.Draw(_art, currRect, null, _tint, Rotation, RotOffset, SpriteEffects.None, 1);
+            sb.Draw(Art, currRect, null, Tint, Rotation, RotOffset, SpriteEffects.None, 1);
             //sb.Draw(Game1.Pixel, CollRect, Color.Red * 0.25f);
         }
     }

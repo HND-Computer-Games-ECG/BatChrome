@@ -36,6 +36,15 @@ namespace BatChrome
         Length
     }
 
+    enum SelectedBall
+    {
+        None,
+        Jelly,
+        Flashy,
+        Trailing,
+        Length
+    }
+
     public class Game1 : Game
     {
         public static readonly Random RNG = new Random();
@@ -62,8 +71,7 @@ namespace BatChrome
         private bool _smoothBat;
         private bool _jellyBat;
         private bool _batStagger;
-        private bool _jellyBall;
-        private bool _flashyBall;
+        private SelectedBall _selectedBall;
         #endregion
 
         #region Art Sources
@@ -154,8 +162,7 @@ namespace BatChrome
             _jellyBat = false;
             _selectedFX = SelectedSoundFX.None;
             _batStagger = false;
-            _jellyBall = false;
-            _flashyBall = false;
+            _selectedBall = SelectedBall.None;
         }
 
         private void InitLevel()
@@ -338,7 +345,23 @@ namespace BatChrome
                     {
                         _gameState = GameState.Playing;
                         _launchTimer = _launchDelay;
-                        balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _jellyBall, _flashyBall));
+                        switch (_selectedBall)
+                        {
+                            case SelectedBall.None:
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, false, false, false));
+                                break;
+                            case SelectedBall.Jelly:
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, true, false, false));
+                                break;
+                            case SelectedBall.Flashy:
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, true, true, false));
+                                break;
+                            case SelectedBall.Trailing:
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, true, true, true));
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
                         if (_isColoured) balls.Last().SetTint(Palette.GetColor(1));
                     }
                     break;
@@ -440,18 +463,37 @@ namespace BatChrome
 
             if (kb.WasKeyJustDown(Keys.NumPad7))
             {
-                _jellyBall = !_jellyBall;
+                _selectedBall = (SelectedBall) ((int) (_selectedBall + 1) % (int) SelectedBall.Length);
                 foreach (var ball in balls)
-                    ball.Jelly = _jellyBall;
-            }
+                {
+                    switch (_selectedBall)
+                    {
+                        case SelectedBall.None:
+                            ball.Jelly = false;
+                            ball.Flash = false;
+                            ball.Trail = false;
+                            break;
+                        case SelectedBall.Jelly:
+                            ball.Jelly = true;
+                            ball.Flash = false;
+                            ball.Trail = false;
+                            break;
+                        case SelectedBall.Flashy:
+                            ball.Jelly = true;
+                            ball.Flash = true;
+                            ball.Trail = false;
+                            break;
+                        case SelectedBall.Trailing:
+                            ball.Jelly = true;
+                            ball.Flash = true;
+                            ball.Trail = true;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                }
 
-            if (kb.WasKeyJustDown(Keys.NumPad8))
-            {
-                _flashyBall = !_flashyBall;
-                foreach (var ball in balls)
-                    ball.Flash = _flashyBall;
             }
-
             #endregion
 
         }
@@ -506,7 +548,7 @@ namespace BatChrome
             #region Draw balls
             foreach (var ball in balls)
             {
-                ball.Draw(_spriteBatch);
+                ball.Draw(_spriteBatch, gameTime);
             }
             #endregion
 
@@ -520,8 +562,7 @@ namespace BatChrome
                 "NP4: Smooth-",
                 "NP5: Jellybat-",
                 "NP6: Stagger-",
-                "NP7: Jellyball-",
-                "NP8: Flashyball-",
+                "NP7: Ball-",
             };
 
             int i, x = 0, y = 0;
@@ -544,10 +585,7 @@ namespace BatChrome
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _batStagger, _uiTL + new Vector2(x, y), Color.White);
 
             x += 170; y = 0;
-            _spriteBatch.DrawString(_uiFont, uiText[i++] + _jellyBall, _uiTL + new Vector2(x, y), Color.White);
-
-            y += _uiFont.LineSpacing;
-            _spriteBatch.DrawString(_uiFont, uiText[i++] + _flashyBall, _uiTL + new Vector2(x, y), Color.White);
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedBall, _uiTL + new Vector2(x, y), Color.White);
 
             _spriteBatch.End();
 
