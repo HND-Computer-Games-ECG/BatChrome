@@ -62,6 +62,7 @@ namespace BatChrome
         private bool _smoothBat;
         private bool _jellyBat;
         private bool _batStagger;
+        private bool _jellyBall;
         #endregion
 
         #region Art Sources
@@ -152,6 +153,7 @@ namespace BatChrome
             _jellyBat = false;
             _selectedFX = SelectedSoundFX.None;
             _batStagger = false;
+            _jellyBall = false;
         }
 
         private void InitLevel()
@@ -334,7 +336,7 @@ namespace BatChrome
                     {
                         _gameState = GameState.Playing;
                         _launchTimer = _launchDelay;
-                        balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes));
+                        balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _jellyBall));
                         if (_isColoured) balls.Last().Tint = Palette.GetColor(1);
                     }
                     break;
@@ -354,11 +356,6 @@ namespace BatChrome
 
             foreach (var ball in balls)
             {
-                if (_selectedFX == SelectedSoundFX.None)
-                    ball.Update(gameTime, null);
-                else
-                    ball.Update(gameTime, _hitsFX[_hitTone]);
-
                 #region bat / ball collision
 
                 if (ball.CollRect.Intersects(bat.CollRect))
@@ -369,7 +366,7 @@ namespace BatChrome
                     else
                     {
                         if (_batStagger)
-                            bat.Displace += (bat.Position-ball.Position).NormalizedCopy() * 16;
+                            bat.Displace += ball.Velocity.NormalizedCopy() * 16;
                         ball.ReverseY();
                     }
 
@@ -398,8 +395,12 @@ namespace BatChrome
                         }
                     }
                 }
-
                 #endregion
+
+                if (_selectedFX == SelectedSoundFX.None)
+                    ball.Update(gameTime, null);
+                else
+                    ball.Update(gameTime, _hitsFX[_hitTone]);
             }
 
             #region Key handlers
@@ -430,13 +431,16 @@ namespace BatChrome
             }
 
             if (kb.WasKeyJustDown(Keys.NumPad5))
-            {
                 _jellyBat = !_jellyBat;
-            }
 
             if (_smoothBat && kb.WasKeyJustDown(Keys.NumPad6))
-            {
                 _batStagger = !_batStagger;
+
+            if (kb.WasKeyJustDown(Keys.NumPad7))
+            {
+                _jellyBall = !_jellyBall;
+                foreach (var ball in balls)
+                    ball.Jelly = _jellyBall;
             }
 
             #endregion
@@ -505,8 +509,10 @@ namespace BatChrome
                 "NP2: Sound-",
                 "NP3: Easing-",
                 "NP4: Smooth-",
-                "NP5: Jelly-",
+                "NP5: Jellybat-",
                 "NP6: Stagger-",
+                "NP7: Jellyball-",
+
             };
 
             int i, x = 0, y = 0;
@@ -528,7 +534,8 @@ namespace BatChrome
             y += _uiFont.LineSpacing;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _batStagger, _uiTL + new Vector2(x, y), Color.White);
 
-            // x += 170; y = 0;
+            x += 170; y = 0;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _jellyBall, _uiTL + new Vector2(x, y), Color.White);
 
             _spriteBatch.End();
 

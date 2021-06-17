@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
-using SharpDX.Direct2D1;
 using SpriteBatch = Microsoft.Xna.Framework.Graphics.SpriteBatch;
 
 namespace BatChrome
@@ -60,7 +57,9 @@ namespace BatChrome
             currRect.Width = (int) newWidth;
             currRect.Height = (int) newHeight;
 
-            sb.Draw(_art, currRect, Tint);
+            currRect.Offset(RotOffset);
+
+            sb.Draw(_art, currRect, null, Tint, Rotation, RotOffset, SpriteEffects.None, 1);
             //sb.Draw(Game1.Pixel, CollRect, Color.Red * 0.25f);
         }
     }
