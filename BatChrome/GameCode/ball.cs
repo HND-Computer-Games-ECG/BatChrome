@@ -37,6 +37,9 @@ namespace BatChrome
             }
         }
 
+        public SelectedSoundFX PlaySounds { get; set; }
+        private static List<SoundEffect> _wallSounds;
+
         public bool Flash { get; set; }
         private Color _baseColour;
         private float _flashAmount;
@@ -60,8 +63,11 @@ namespace BatChrome
             base.SetTint(col);
         }
 
-        public Ball(Point position, Texture2D art, Rectangle screenRect, bool jelly, bool flash, bool trail) : base(position, art)
+        public Ball(Point position, Texture2D art, Rectangle screenRect, List<SoundEffect> fx, bool jelly, bool flash, bool trail, SelectedSoundFX sounds) : base(position, art)
         {
+            PlaySounds = sounds;
+            _wallSounds = fx;
+
             Flash = flash;
             _baseColour = Tint;
             _flashAmount = 0;
@@ -79,7 +85,7 @@ namespace BatChrome
             _oldPos = Position;
         }
 
-        public void Update(GameTime gt, SoundEffect wallHit)
+        public override void Update(GameTime gt)
         {
             if (Trail)
                 trails.Add(new TrailItem((Position + RotOffset).ToPoint(), Art, Rotation, Tint));
@@ -97,14 +103,22 @@ namespace BatChrome
 
             if (Position.X < _screenBounds.Left || Position.X > _screenBounds.Right)
             {
+                if (PlaySounds == SelectedSoundFX.Simple)
+                    _wallSounds[0].Play();
+                else if (PlaySounds == SelectedSoundFX.Better)
+                    _wallSounds[Game1.RNG.Next(1, _wallSounds.Count)].Play();
+
                 ReverseX();
-                wallHit?.Play();
             }
 
             if (Position.Y < _screenBounds.Top || Position.Y > _screenBounds.Bottom)
             {
+                if (PlaySounds == SelectedSoundFX.Simple)
+                    _wallSounds[0].Play();
+                else if (PlaySounds == SelectedSoundFX.Better)
+                    _wallSounds[Game1.RNG.Next(1, _wallSounds.Count)].Play();
+
                 ReverseY();
-                wallHit?.Play();
             }
 
             if (Jelly)
@@ -162,6 +176,7 @@ namespace BatChrome
 
             _rotationSpeed = newRotSpeed;
             Position = _oldPos;
+
             if (Jelly)
                 Stretch = new Vector2(2);
         }

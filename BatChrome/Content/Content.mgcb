@@ -80,6 +80,18 @@
 /processorParam:Quality=Best
 /build:FX/pingpong_3.wav
 
+#begin FX/wallHitb1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:FX/wallHitb1.wav
+
+#begin FX/wallHitb2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:FX/wallHitb2.wav
+
 #begin PixelFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor

@@ -38,7 +38,7 @@ namespace BatChrome
 
     enum SelectedBall
     {
-        None,
+        Basic,
         Jelly,
         Flashy,
         Trailing,
@@ -82,7 +82,8 @@ namespace BatChrome
         public static Texture2D Pixel;
         #endregion
 
-        private List<SoundEffect> _hitsFX;
+        private List<SoundEffect> _GOHitsFX;
+        private List<SoundEffect> _wallHitFX;
 
         #region GameObjects
         private Bat bat;
@@ -121,8 +122,10 @@ namespace BatChrome
             _launchDelay = 2f;
             _launchTimer = _launchDelay;
 
-            _hitsFX = new List<SoundEffect>();
+            _GOHitsFX = new List<SoundEffect>();
             _hitTone = 0;
+
+            _wallHitFX = new List<SoundEffect>();
 
             ResetDIPs();
 
@@ -147,9 +150,13 @@ namespace BatChrome
             _ballTex = Content.Load<Texture2D>(@"Art/ball");
             _uiFont = Content.Load<SpriteFont>("PixelFont");
 
-            for (int i = 0; i < 4; i++)
-                _hitsFX.Add(Content.Load<SoundEffect>(@"FX/pingpong_" + i));
-            _hitsFX.Add(Content.Load<SoundEffect>(@"FX/correct"));
+            for (var i = 0; i < 4; i++)
+                _GOHitsFX.Add(Content.Load<SoundEffect>(@"FX/pingpong_" + i));
+            _GOHitsFX.Add(Content.Load<SoundEffect>(@"FX/correct"));
+
+            _wallHitFX.Add(Content.Load<SoundEffect>(@"FX/pingpong_0"));
+            for (var i = 1; i <= 2; i++)
+                _wallHitFX.Add(Content.Load<SoundEffect>(@"FX/wallHitb" + i));
 
             InitLevel();
         }
@@ -162,7 +169,18 @@ namespace BatChrome
             _jellyBat = false;
             _selectedFX = SelectedSoundFX.None;
             _batStagger = false;
-            _selectedBall = SelectedBall.None;
+            _selectedBall = SelectedBall.Basic;
+        }
+
+        private void MaxDIPs()
+        {
+            _isColoured = true;
+            _selectedEasing = SelectedEasing.BouncePlusRandom;
+            _smoothBat = true;
+            _jellyBat = true;
+            _selectedFX = SelectedSoundFX.Better;
+            _batStagger = true;
+            _selectedBall = SelectedBall.Trailing;
         }
 
         private void InitLevel()
@@ -298,11 +316,11 @@ namespace BatChrome
                 case SelectedSoundFX.None:
                     break;
                 case SelectedSoundFX.Simple:
-                    _hitsFX[0].Play();
+                    _GOHitsFX[0].Play();
                     break;
                 case SelectedSoundFX.Better:
-                    _hitsFX[_hitTone].Play();
-                    if (_hitTone < _hitsFX.Count - 1)
+                    _GOHitsFX[_hitTone].Play();
+                    if (_hitTone < _GOHitsFX.Count - 1)
                         _hitTone++;
                     break;
                 default:
@@ -319,7 +337,7 @@ namespace BatChrome
                 case SelectedSoundFX.Simple:
                 case SelectedSoundFX.Better:
                     _hitTone = 0;
-                    _hitsFX[_hitTone].Play();
+                    _GOHitsFX[_hitTone].Play();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -347,17 +365,17 @@ namespace BatChrome
                         _launchTimer = _launchDelay;
                         switch (_selectedBall)
                         {
-                            case SelectedBall.None:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, false, false, false));
+                            case SelectedBall.Basic:
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX, false, false, false, _selectedFX));
                                 break;
                             case SelectedBall.Jelly:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, true, false, false));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX,true, false, false, _selectedFX));
                                 break;
                             case SelectedBall.Flashy:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, true, true, false));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX,true, true, false, _selectedFX));
                                 break;
                             case SelectedBall.Trailing:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, true, true, true));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX,true, true, true, _selectedFX));
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -422,16 +440,19 @@ namespace BatChrome
                 }
                 #endregion
 
-                if (_selectedFX == SelectedSoundFX.None)
-                    ball.Update(gameTime, null);
-                else
-                    ball.Update(gameTime, _hitsFX[_hitTone]);
+                ball.Update(gameTime);
             }
 
             #region Key handlers
-            if (kb.WasKeyJustDown(Keys.Back))
+            if (kb.WasKeyJustDown(Keys.Down))
             {
                 ResetDIPs();
+                Reset();
+            }
+
+            if (kb.WasKeyJustDown(Keys.Up))
+            {
+                MaxDIPs();
                 Reset();
             }
 
@@ -440,7 +461,14 @@ namespace BatChrome
             if (kb.WasKeyJustDown(Keys.NumPad1)) ColourEverything();
 
             if (kb.WasKeyJustDown(Keys.NumPad2))
+            {
                 _selectedFX = (SelectedSoundFX) ((int) (_selectedFX + 1) % (int) SelectedSoundFX.Length);
+                foreach (var ball in balls)
+                {
+                    ball.PlaySounds = _selectedFX;
+                }
+
+            }
 
             if (kb.WasKeyJustDown(Keys.NumPad3))
             {
@@ -468,7 +496,7 @@ namespace BatChrome
                 {
                     switch (_selectedBall)
                     {
-                        case SelectedBall.None:
+                        case SelectedBall.Basic:
                             ball.Jelly = false;
                             ball.Flash = false;
                             ball.Trail = false;
@@ -554,7 +582,8 @@ namespace BatChrome
 
             string[] uiText =
             {
-                "Bsp: Reset",
+                "Down: Reset",
+                "Up:  Max",
                 "NP0: Refresh",
                 "NP1: Colour",
                 "NP2: Sound-",
@@ -566,7 +595,7 @@ namespace BatChrome
             };
 
             int i, x = 0, y = 0;
-            for (i = 0; i < 3; i++, y++)
+            for (i = 0; i < 4; i++, y++)
                 _spriteBatch.DrawString(_uiFont, uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
 
             x += 80; y = 0;
