@@ -18,11 +18,11 @@ namespace BatChrome
             Speed = new Vector2(900, 32);
         }
 
-        public void Update(GameTime gt, bool smoothing, bool jelly)
+        public void Update(GameTime gt, SelectedBat batMode)
         {
             var destination = MathHelper.Clamp(MouseExtended.GetState().X, minX, maxX);
 
-            if (jelly)
+            if (batMode >= SelectedBat.Jelly)
             {
                 var baseStretch = Math.Abs(Position.X - destination) / 256;
                 Stretch = new Vector2(baseStretch, -baseStretch);
@@ -30,7 +30,7 @@ namespace BatChrome
             else
                 Stretch = Vector2.Zero;
 
-            if (smoothing)
+            if (batMode >= SelectedBat.Smooth)
                 Destination = new Vector2(destination, Destination.Y);
             else
                 Position = new Vector2(destination, Position.Y);

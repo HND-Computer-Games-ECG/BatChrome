@@ -18,6 +18,14 @@ namespace BatChrome
         Playing
     }
 
+    enum SelectedColour
+    {
+        None,
+        Simple,
+        Reactive,
+        Length
+    }
+
     enum SelectedEasing
     {
         None,
@@ -33,6 +41,15 @@ namespace BatChrome
         None,
         Simple,
         Better,
+        Length
+    }
+
+    enum SelectedBat
+    {
+        Basic,
+        Smooth,
+        Jelly,
+        Stagger,
         Length
     }
 
@@ -64,13 +81,11 @@ namespace BatChrome
         private Vector2 _uiTL;
 
         #region DIPs
-        private bool _isColoured;
+        private SelectedColour _selectedColour;
         private SelectedSoundFX _selectedFX;
         private int _hitTone;
         private SelectedEasing _selectedEasing;
-        private bool _smoothBat;
-        private bool _jellyBat;
-        private bool _batStagger;
+        private SelectedBat _selectedBat;
         private SelectedBall _selectedBall;
         #endregion
 
@@ -127,7 +142,6 @@ namespace BatChrome
 
             _wallHitFX = new List<SoundEffect>();
 
-            ResetDIPs();
 
             gridTL = new Point(100, 50);
             gridSpacing = new Point(50, 32);
@@ -136,6 +150,8 @@ namespace BatChrome
             brickGrid = new List<List<GameObject>>();
 
             balls = new List<Ball>();
+
+            ResetDIPs();
 
             base.Initialize();
         }
@@ -163,23 +179,21 @@ namespace BatChrome
 
         private void ResetDIPs()
         {
-            _isColoured = false;
+            _selectedColour = SelectedColour.None;
+            WhiteEverything();
             _selectedEasing = SelectedEasing.None;
-            _smoothBat = false;
-            _jellyBat = false;
+            _selectedBat = SelectedBat.Basic;
             _selectedFX = SelectedSoundFX.None;
-            _batStagger = false;
             _selectedBall = SelectedBall.Basic;
         }
 
         private void MaxDIPs()
         {
-            _isColoured = true;
+            ColourEverything();
+            _selectedColour = SelectedColour.Reactive;
             _selectedEasing = SelectedEasing.BouncePlusRandom;
-            _smoothBat = true;
-            _jellyBat = true;
+            _selectedBat = SelectedBat.Stagger;
             _selectedFX = SelectedSoundFX.Better;
-            _batStagger = true;
             _selectedBall = SelectedBall.Trailing;
         }
 
@@ -203,7 +217,8 @@ namespace BatChrome
                         {
                             var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
                             var newBrick = new GameObject(loc, _brickTex);
-                            if (_isColoured) newBrick.SetTint(Palette.GetRandom(2));
+                            if (_selectedColour > SelectedColour.None) 
+                                newBrick.SetTint(Palette.GetRandom(2));
 
                             brickGrid[i].Add(newBrick);
                         }
@@ -221,7 +236,7 @@ namespace BatChrome
                         {
                             var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
                             var newBrick = new GameObject(new Point(loc.X, -32), _brickTex);
-                            if (_isColoured) newBrick.SetTint(Palette.GetRandom(2));
+                            if (_selectedColour > SelectedColour.None) newBrick.SetTint(Palette.GetRandom(2));
 
                             switch (_selectedEasing)
                             {
@@ -306,7 +321,7 @@ namespace BatChrome
                 }
             }
 
-            if (_isColoured) bat.SetTint(Palette.GetColor(0));
+            if (_selectedColour > SelectedColour.None) bat.SetTint(Palette.GetColor(0));
         }
 
         void brickHit()
@@ -380,7 +395,7 @@ namespace BatChrome
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
-                        if (_isColoured) balls.Last().SetTint(Palette.GetColor(1));
+                        if (_selectedColour > SelectedColour.None) balls.Last().SetTint(Palette.GetColor(1));
                     }
                     break;
                 case GameState.Playing:
@@ -395,7 +410,7 @@ namespace BatChrome
 
         private void DoPlaying(GameTime gameTime)
         {
-            bat.Update(gameTime, _smoothBat, _jellyBat);
+            bat.Update(gameTime, _selectedBat);
 
             foreach (var ball in balls)
             {
@@ -408,12 +423,14 @@ namespace BatChrome
                         ball.ReverseX();
                     else
                     {
-                        if (_batStagger)
+                        if (_selectedBat == SelectedBat.Stagger)
                             bat.Displace += ball.Velocity.NormalizedCopy() * 16;
                         ball.ReverseY();
                     }
-
                     batHit();
+                    if (_selectedColour == SelectedColour.Reactive)
+                        ball.SetTint(bat.GetTint());
+
                 }
 
                 #endregion
@@ -432,8 +449,10 @@ namespace BatChrome
                             else
                                 ball.ReverseY();
 
-                            brickGrid[i].RemoveAt(j);
                             brickHit();
+                            if (_selectedColour == SelectedColour.Reactive)
+                                ball.SetTint(brickGrid[i][j].GetTint());
+                            brickGrid[i].RemoveAt(j);
                             break;
                         }
                     }
@@ -458,7 +477,25 @@ namespace BatChrome
 
             if (kb.WasKeyJustDown(Keys.NumPad0)) Reset();
 
-            if (kb.WasKeyJustDown(Keys.NumPad1)) ColourEverything();
+            if (kb.WasKeyJustDown(Keys.NumPad1))
+            {
+                _selectedColour = (SelectedColour) ((int) (_selectedColour + 1) % (int) SelectedColour.Length);
+
+                switch (_selectedColour)
+                {
+                    case SelectedColour.None:
+                        WhiteEverything();
+                        break;
+                    case SelectedColour.Simple:
+                        ColourEverything();
+                        break;
+                    case SelectedColour.Reactive:
+                        ColourEverything();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
 
             if (kb.WasKeyJustDown(Keys.NumPad2))
             {
@@ -478,18 +515,10 @@ namespace BatChrome
 
             if (kb.WasKeyJustDown(Keys.NumPad4))
             {
-                _smoothBat = !_smoothBat;
-                if (!_smoothBat)
-                    _batStagger = false;
+                _selectedBat = (SelectedBat) ((int) (_selectedBat + 1) % (int) SelectedBat.Length);
             }
 
             if (kb.WasKeyJustDown(Keys.NumPad5))
-                _jellyBat = !_jellyBat;
-
-            if (_smoothBat && kb.WasKeyJustDown(Keys.NumPad6))
-                _batStagger = !_batStagger;
-
-            if (kb.WasKeyJustDown(Keys.NumPad7))
             {
                 _selectedBall = (SelectedBall) ((int) (_selectedBall + 1) % (int) SelectedBall.Length);
                 foreach (var ball in balls)
@@ -552,9 +581,27 @@ namespace BatChrome
                     brick.SetTint(Palette.GetRandom(usedList));
                 }
             }
-
-            _isColoured = true;
         }
+
+        private void WhiteEverything()
+        {
+
+            bat?.SetTint(Color.White);
+
+            foreach (var ball in balls)
+            {
+                ball.SetTint(Color.White);
+            }
+
+            foreach (var brickLine in brickGrid)
+            {
+                foreach (var brick in brickLine)
+                {
+                    brick.SetTint(Color.White);
+                }
+            }
+        }
+
 
         protected override void Draw(GameTime gameTime)
         {
@@ -585,36 +632,33 @@ namespace BatChrome
                 "Down: Reset",
                 "Up:  Max",
                 "NP0: Refresh",
-                "NP1: Colour",
+                "NP1: Colour-",
                 "NP2: Sound-",
                 "NP3: Easing-",
-                "NP4: Smooth-",
-                "NP5: Jellybat-",
-                "NP6: Stagger-",
-                "NP7: Ball-",
+                "NP4: Bat-",
+                "NP5: Ball-",
             };
 
             int i, x = 0, y = 0;
-            for (i = 0; i < 4; i++, y++)
+            for (i = 0; i < 3; i++, y++)
                 _spriteBatch.DrawString(_uiFont, uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
 
             x += 80; y = 0;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedColour, _uiTL + new Vector2(x, y), Color.White);
+
+            y += _uiFont.LineSpacing;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedFX, _uiTL + new Vector2(x, y), Color.White);
 
             y += _uiFont.LineSpacing;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedEasing, _uiTL + new Vector2(x, y), Color.White);
 
             y += _uiFont.LineSpacing;
-            _spriteBatch.DrawString(_uiFont, uiText[i++] + _smoothBat, _uiTL + new Vector2(x, y), Color.White);
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedBat, _uiTL + new Vector2(x, y), Color.White);
 
             y += _uiFont.LineSpacing;
-            _spriteBatch.DrawString(_uiFont, uiText[i++] + _jellyBat, _uiTL + new Vector2(x, y), Color.White);
-
-            y += _uiFont.LineSpacing;
-            _spriteBatch.DrawString(_uiFont, uiText[i++] + _batStagger, _uiTL + new Vector2(x, y), Color.White);
-
-            x += 170; y = 0;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedBall, _uiTL + new Vector2(x, y), Color.White);
+
+            // x += 170; y = 0;
 
             _spriteBatch.End();
 

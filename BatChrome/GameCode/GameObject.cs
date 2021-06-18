@@ -24,6 +24,11 @@ namespace BatChrome
             Tint = col;
         }
 
+        public Color GetTint()
+        {
+            return Tint;
+        }
+
         public GameObject(Point position, Texture2D art, float rotation = 0) 
             : this(position, art, rotation, Color.White) { }
 
