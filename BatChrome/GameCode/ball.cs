@@ -4,6 +4,8 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using SharpDX.Direct2D1;
+using SpriteBatch = Microsoft.Xna.Framework.Graphics.SpriteBatch;
 
 namespace BatChrome
 {
@@ -50,6 +52,9 @@ namespace BatChrome
         public bool Trail { get; set; }
         private List<TrailItem> trails;
 
+        public bool ImpactEmitter { get; set; }
+        private ImpactEmitter _impactEmitter;
+
         public Vector2 Velocity => _velocity;
 
         private Vector2 _oldPos;
@@ -63,7 +68,7 @@ namespace BatChrome
             base.SetTint(col);
         }
 
-        public Ball(Point position, Texture2D art, Rectangle screenRect, List<SoundEffect> fx, bool jelly, bool flash, bool trail, SelectedSoundFX sounds) : base(position, art)
+        public Ball(Point position, Texture2D ballArt, Texture2D particleArt, Rectangle screenRect, List<SoundEffect> fx, bool jelly, bool flash, bool trail, SelectedSoundFX sounds, bool impacts) : base(position, ballArt)
         {
             PlaySounds = sounds;
             _wallSounds = fx;
@@ -78,9 +83,12 @@ namespace BatChrome
             Trail = trail;
             trails = new List<TrailItem>();
 
+            ImpactEmitter = impacts;
+            _impactEmitter = new ImpactEmitter(particleArt, position.ToVector2());
+
             _velocity = new Vector2(200, -200);
-            _screenBounds = new Rectangle(screenRect.Left + art.Width / 2, screenRect.Top + art.Height / 2,
-                screenRect.Right - art.Width, screenRect.Bottom - art.Height);
+            _screenBounds = new Rectangle(screenRect.Left + ballArt.Width / 2, screenRect.Top + ballArt.Height / 2,
+                screenRect.Right - ballArt.Width, screenRect.Bottom - ballArt.Height);
 
             _oldPos = Position;
         }
@@ -100,6 +108,7 @@ namespace BatChrome
             }
 
             Position += _velocity * (float) gt.ElapsedGameTime.TotalSeconds;
+            _impactEmitter.Location = Position;
 
             if (Position.X < _screenBounds.Left || Position.X > _screenBounds.Right)
             {
@@ -154,6 +163,8 @@ namespace BatChrome
                 trailItem.Draw(sb, gt);
             }
 
+            _impactEmitter.Draw(sb, (float) gt.ElapsedGameTime.TotalSeconds);
+
             base.Draw(sb);
         }
 
@@ -171,6 +182,9 @@ namespace BatChrome
 
         private void Reversal(float newRotSpeed)
         {
+            if (ImpactEmitter)
+                _impactEmitter.Play(_velocity, Tint);
+
             if (Flash)
                 _flashAmount = 1;
 

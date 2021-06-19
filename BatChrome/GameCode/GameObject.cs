@@ -32,7 +32,7 @@ namespace BatChrome
         public GameObject(Point position, Texture2D art, float rotation = 0) 
             : this(position, art, rotation, Color.White) { }
 
-        public GameObject(Point position, Texture2D art, float rotation, Color tint) 
+        private GameObject(Point position, Texture2D art, float rotation, Color tint) 
             : base(new Rectangle(position, art.Bounds.Size), rotation)
         {
             Art = art;

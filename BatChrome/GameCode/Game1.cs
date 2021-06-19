@@ -72,6 +72,7 @@ namespace BatChrome
         private readonly Tweener _tweener;
 
         private KeyboardStateExtended kb;
+        private MouseStateExtended ms;
 
         private GameState _gameState;
         private float _launchDelay;
@@ -87,6 +88,7 @@ namespace BatChrome
         private SelectedEasing _selectedEasing;
         private SelectedBat _selectedBat;
         private SelectedBall _selectedBall;
+        private bool _impactEmitter;
         #endregion
 
         #region Art Sources
@@ -105,7 +107,7 @@ namespace BatChrome
         private List<Ball> balls;
 
         private Point gridTL, gridSpacing, gridSize;
-        private List<List<GameObject>> brickGrid;
+        private List<List<Brick>> brickGrid;
 
         private readonly int[,] LEVEL1 = 
         {
@@ -147,7 +149,7 @@ namespace BatChrome
             gridSpacing = new Point(50, 32);
             gridSize = new Point(LEVEL1.GetLength(1), LEVEL1.GetLength(0));
 
-            brickGrid = new List<List<GameObject>>();
+            brickGrid = new List<List<Brick>>();
 
             balls = new List<Ball>();
 
@@ -185,6 +187,7 @@ namespace BatChrome
             _selectedBat = SelectedBat.Basic;
             _selectedFX = SelectedSoundFX.None;
             _selectedBall = SelectedBall.Basic;
+            _impactEmitter = false;
         }
 
         private void MaxDIPs()
@@ -195,6 +198,7 @@ namespace BatChrome
             _selectedBat = SelectedBat.Stagger;
             _selectedFX = SelectedSoundFX.Better;
             _selectedBall = SelectedBall.Trailing;
+            _impactEmitter = true;
         }
 
         private void InitLevel()
@@ -210,13 +214,13 @@ namespace BatChrome
             {
                 for (var i = 0; i < gridSize.Y; i++)
                 {
-                    brickGrid.Add(new List<GameObject>());
+                    brickGrid.Add(new List<Brick>());
                     for (var j = 0; j < gridSize.X; j++)
                     {
                         if (LEVEL1[i, j] != 0)
                         {
                             var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
-                            var newBrick = new GameObject(loc, _brickTex);
+                            var newBrick = new Brick(loc, _brickTex);
                             if (_selectedColour > SelectedColour.None) 
                                 newBrick.SetTint(Palette.GetRandom(2));
 
@@ -229,13 +233,13 @@ namespace BatChrome
             {
                 for (var i = 0; i < gridSize.Y; i++)
                 {
-                    brickGrid.Add(new List<GameObject>());
+                    brickGrid.Add(new List<Brick>());
                     for (var j = 0; j < gridSize.X; j++)
                     {
                         if (LEVEL1[i, j] != 0)
                         {
                             var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
-                            var newBrick = new GameObject(new Point(loc.X, -32), _brickTex);
+                            var newBrick = new Brick(new Point(loc.X, -32), _brickTex);
                             if (_selectedColour > SelectedColour.None) newBrick.SetTint(Palette.GetRandom(2));
 
                             switch (_selectedEasing)
@@ -362,6 +366,8 @@ namespace BatChrome
         protected override void Update(GameTime gameTime)
         {
             kb = KeyboardExtended.GetState();
+            ms = MouseExtended.GetState();
+
             if (kb.IsKeyDown(Keys.Escape))
                 Exit();
 
@@ -381,16 +387,16 @@ namespace BatChrome
                         switch (_selectedBall)
                         {
                             case SelectedBall.Basic:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX, false, false, false, _selectedFX));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX, false, false, false, _selectedFX, _impactEmitter));
                                 break;
                             case SelectedBall.Jelly:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX,true, false, false, _selectedFX));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, false, false, _selectedFX, _impactEmitter));
                                 break;
                             case SelectedBall.Flashy:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX,true, true, false, _selectedFX));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, true, false, _selectedFX, _impactEmitter));
                                 break;
                             case SelectedBall.Trailing:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, _screenRes, _wallHitFX,true, true, true, _selectedFX));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, true, true, _selectedFX, _impactEmitter));
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -410,7 +416,7 @@ namespace BatChrome
 
         private void DoPlaying(GameTime gameTime)
         {
-            bat.Update(gameTime, _selectedBat);
+            bat.Update(gameTime, _selectedBat, ms);
 
             foreach (var ball in balls)
             {
@@ -441,6 +447,12 @@ namespace BatChrome
                 {
                     for (var j = brickGrid[i].Count - 1; j >= 0; j--)
                     {
+                        if (brickGrid[i][j].State == BrickState.Dead)
+                        {
+                            brickGrid[i].RemoveAt(j);
+                            break;
+                        }
+
                         if (ball.CollRect.Intersects(brickGrid[i][j].CollRect))
                         {
                             var overlap = Rectangle.Intersect(ball.CollRect, brickGrid[i][j].CollRect);
@@ -452,8 +464,8 @@ namespace BatChrome
                             brickHit();
                             if (_selectedColour == SelectedColour.Reactive)
                                 ball.SetTint(brickGrid[i][j].GetTint());
-                            brickGrid[i].RemoveAt(j);
-                            break;
+
+                            brickGrid[i][j].State = BrickState.Dead;
                         }
                     }
                 }
@@ -549,8 +561,17 @@ namespace BatChrome
                             throw new ArgumentOutOfRangeException();
                     }
                 }
-
             }
+
+            if (kb.WasKeyJustDown(Keys.NumPad6))
+            {
+                _impactEmitter = !_impactEmitter;
+                foreach (var ball in balls)
+                {
+                    ball.ImpactEmitter = _impactEmitter;
+                }
+            }
+
             #endregion
 
         }
@@ -637,6 +658,7 @@ namespace BatChrome
                 "NP3: Easing-",
                 "NP4: Bat-",
                 "NP5: Ball-",
+                "NP6: Impacts-",
             };
 
             int i, x = 0, y = 0;
@@ -658,7 +680,8 @@ namespace BatChrome
             y += _uiFont.LineSpacing;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedBall, _uiTL + new Vector2(x, y), Color.White);
 
-            // x += 170; y = 0;
+            x += 170; y = 0;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _impactEmitter, _uiTL + new Vector2(x, y), Color.White);
 
             _spriteBatch.End();
 

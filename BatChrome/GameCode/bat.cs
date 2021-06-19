@@ -18,9 +18,9 @@ namespace BatChrome
             Speed = new Vector2(900, 32);
         }
 
-        public void Update(GameTime gt, SelectedBat batMode)
+        public void Update(GameTime gt, SelectedBat batMode, MouseStateExtended ms)
         {
-            var destination = MathHelper.Clamp(MouseExtended.GetState().X, minX, maxX);
+            var destination = MathHelper.Clamp(ms.X, minX, maxX);
 
             if (batMode >= SelectedBat.Jelly)
             {
