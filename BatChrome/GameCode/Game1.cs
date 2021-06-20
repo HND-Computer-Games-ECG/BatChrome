@@ -416,7 +416,12 @@ namespace BatChrome
 
         private void DoPlaying(GameTime gameTime)
         {
-            bat.Update(gameTime, _selectedBat, ms);
+            foreach (var ball in balls)
+            {
+                ball.Move((float) gameTime.ElapsedGameTime.TotalSeconds);
+            }
+
+            bat.Update((float) gameTime.ElapsedGameTime.TotalSeconds, _selectedBat, ms);
 
             foreach (var ball in balls)
             {
@@ -471,7 +476,7 @@ namespace BatChrome
                 }
                 #endregion
 
-                ball.Update(gameTime);
+                ball.Update((float) gameTime.ElapsedGameTime.TotalSeconds);
             }
 
             #region Key handlers
@@ -629,6 +634,9 @@ namespace BatChrome
             GraphicsDevice.Clear(Color.DimGray);
 
             _spriteBatch.Begin();
+
+            DrawUIText();
+
             bat.Draw(_spriteBatch);
 
             #region Draw bricks
@@ -648,6 +656,15 @@ namespace BatChrome
             }
             #endregion
 
+            _spriteBatch.End();
+
+            base.Draw(gameTime);
+        }
+
+        private void DrawUIText()
+        {
+            int i, x = 0, y = 0;
+
             string[] uiText =
             {
                 "Down: Reset",
@@ -661,11 +678,11 @@ namespace BatChrome
                 "NP6: Impacts-",
             };
 
-            int i, x = 0, y = 0;
             for (i = 0; i < 3; i++, y++)
                 _spriteBatch.DrawString(_uiFont, uiText[i], _uiTL + new Vector2(x, y * _uiFont.LineSpacing), Color.White);
 
-            x += 80; y = 0;
+            x += 80;
+            y = 0;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedColour, _uiTL + new Vector2(x, y), Color.White);
 
             y += _uiFont.LineSpacing;
@@ -680,12 +697,9 @@ namespace BatChrome
             y += _uiFont.LineSpacing;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _selectedBall, _uiTL + new Vector2(x, y), Color.White);
 
-            x += 170; y = 0;
+            x += 170;
+            y = 0;
             _spriteBatch.DrawString(_uiFont, uiText[i++] + _impactEmitter, _uiTL + new Vector2(x, y), Color.White);
-
-            _spriteBatch.End();
-
-            base.Draw(gameTime);
         }
     }
 }

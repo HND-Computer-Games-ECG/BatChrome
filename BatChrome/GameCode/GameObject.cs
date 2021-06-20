@@ -42,18 +42,18 @@ namespace BatChrome
             Speed = Vector2.One;
         }
 
-        public virtual void Update(GameTime gt)
+        public virtual void Update(float deltaTime)
         {
             if (Destination == Position) return;
 
             var distance = (Destination - Position);
             var direction = distance.NormalizedCopy();
-            var delta = direction * Speed * (float) gt.ElapsedGameTime.TotalSeconds;
+            var delta = direction * Speed * deltaTime;
 
             if (delta.Length() > distance.Length())
                 Position = Destination;
             else
-                Displace += direction * Speed * (float) gt.ElapsedGameTime.TotalSeconds;
+                Displace += direction * Speed * deltaTime;
         }
 
         public void Draw(SpriteBatch sb)

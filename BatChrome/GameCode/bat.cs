@@ -18,7 +18,7 @@ namespace BatChrome
             Speed = new Vector2(900, 32);
         }
 
-        public void Update(GameTime gt, SelectedBat batMode, MouseStateExtended ms)
+        public void Update(float deltaTime, SelectedBat batMode, MouseStateExtended ms)
         {
             var destination = MathHelper.Clamp(ms.X, minX, maxX);
 
@@ -35,7 +35,7 @@ namespace BatChrome
             else
                 Position = new Vector2(destination, Position.Y);
 
-            base.Update(gt);
+            base.Update(deltaTime);
         }
     }
 }

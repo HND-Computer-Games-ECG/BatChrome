@@ -65,22 +65,25 @@ namespace BatChrome
             _oldPos = Position;
         }
 
-        public override void Update(GameTime gt)
+        public void Move(float deltaTime)
+        {
+            Position += _velocity * deltaTime;
+            _impactEmitter.Location = Position;
+        }
+
+        public override void Update(float deltaTime)
         {
             if (Trail)
                 _trailEmitter.Play(Position, Rotation, Art.Width, Tint);
 
             if (_flashAmount > 0)
             {
-                _flashAmount = MathHelper.Clamp(_flashAmount - (float) gt.ElapsedGameTime.TotalSeconds * 4, 0, 1);
+                _flashAmount = MathHelper.Clamp(_flashAmount - deltaTime * 4, 0, 1);
                 var r = MathHelper.Lerp(_baseColour.R, Color.White.R, _flashAmount);
                 var g = MathHelper.Lerp(_baseColour.G, Color.White.G, _flashAmount);
                 var b = MathHelper.Lerp(_baseColour.B, Color.White.B, _flashAmount);
                 Tint = new Color((int) r, (int) g, (int) b);
             }
-
-            Position += _velocity * (float) gt.ElapsedGameTime.TotalSeconds;
-            _impactEmitter.Location = Position;
 
             if (Position.X < _screenBounds.Left || Position.X > _screenBounds.Right)
             {
@@ -107,13 +110,13 @@ namespace BatChrome
                 if (Stretch.X <= 0)
                     Stretch = Vector2.Zero;
                 else
-                    Stretch -= new Vector2((float) gt.ElapsedGameTime.TotalSeconds * 16);
+                    Stretch -= new Vector2(deltaTime * 16);
             }
 
             if (Jelly)
             {
                 _rotationSpeed *= 0.97f;
-                Rotation += _rotationSpeed * (float) gt.ElapsedGameTime.TotalSeconds;
+                Rotation += _rotationSpeed * deltaTime;
             }
             else
                 Rotation = 0;
