@@ -11,34 +11,6 @@ namespace BatChrome
 {
     class Ball : GameObject
     {
-        class TrailItem : Primitive
-        {
-            private static Texture2D _art;
-            private Color _tint;
-            private float _alpha;
-
-            public bool IsDead()
-            {
-                return (_alpha <= 0);
-            }
-
-            public TrailItem() : base () { }
-
-            public TrailItem(Point position, Texture2D art, float rotation, Color tint) 
-                : base(new Rectangle(position.X, position.Y, art.Width, art.Height), rotation)
-            {
-                _art = art;
-                _tint = tint;
-                _alpha = 0.1f;
-            }
-
-            public void Draw(SpriteBatch sb, GameTime gt)
-            {
-                _alpha = MathHelper.Clamp(_alpha - (float) gt.ElapsedGameTime.TotalSeconds / 16, 0, 1);
-                sb.Draw(_art, CollRect, null, _tint * _alpha, Rotation, RotOffset, SpriteEffects.None, 1);
-            }
-        }
-
         public SelectedSoundFX PlaySounds { get; set; }
         private static List<SoundEffect> _wallSounds;
 
@@ -50,7 +22,7 @@ namespace BatChrome
         private float _rotationSpeed;
 
         public bool Trail { get; set; }
-        private List<TrailItem> trails;
+        private TrailEmitter _trailEmitter;
 
         public bool ImpactEmitter { get; set; }
         private ImpactEmitter _impactEmitter;
@@ -81,7 +53,7 @@ namespace BatChrome
             _rotationSpeed = 0;
 
             Trail = trail;
-            trails = new List<TrailItem>();
+            _trailEmitter = new TrailEmitter(particleArt, Position);
 
             ImpactEmitter = impacts;
             _impactEmitter = new ImpactEmitter(particleArt, position.ToVector2());
@@ -96,7 +68,7 @@ namespace BatChrome
         public override void Update(GameTime gt)
         {
             if (Trail)
-                trails.Add(new TrailItem((Position + RotOffset).ToPoint(), Art, Rotation, Tint));
+                _trailEmitter.Play(Position, Rotation, Art.Width, Tint);
 
             if (_flashAmount > 0)
             {
@@ -149,21 +121,10 @@ namespace BatChrome
             _oldPos = Position;
         }
 
-        public void Draw(SpriteBatch sb, GameTime gt)
+        public void Draw(SpriteBatch sb, float deltaTime)
         {
-            for (var i = trails.Count - 1; i >= 0; i--)
-            {
-                if (trails[i].IsDead())
-                    trails.RemoveAt(i);
-                else
-                    trails[i].Draw(sb, gt);
-            }
-            foreach (var trailItem in trails)
-            {
-                trailItem.Draw(sb, gt);
-            }
-
-            _impactEmitter.Draw(sb, (float) gt.ElapsedGameTime.TotalSeconds);
+            _trailEmitter.Draw(sb, deltaTime);
+            _impactEmitter.Draw(sb, deltaTime);
 
             base.Draw(sb);
         }

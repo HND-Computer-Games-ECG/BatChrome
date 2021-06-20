@@ -644,7 +644,7 @@ namespace BatChrome
             #region Draw balls
             foreach (var ball in balls)
             {
-                ball.Draw(_spriteBatch, gameTime);
+                ball.Draw(_spriteBatch, (float) gameTime.ElapsedGameTime.TotalSeconds);
             }
             #endregion
 
