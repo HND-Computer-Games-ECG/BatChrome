@@ -118,4 +118,32 @@ namespace BatChrome
                 Particles.Add(new BaseParticle(ParticleTexture, Location, direction.Rotate(Game1.RNG.NextSingle(-0.5f, 0.5f)) * Game1.RNG.NextSingle(1f, 2f), tint, rotationSpeed: 0.2f, scaleDelta: 0.05f, opacityDelta: -0.01f, timeToLive: 2f));
         }
     }
+
+    class ShatterEmitter: Emitter
+    {
+        private const int MARGIN = 5;
+
+        public ShatterEmitter(Texture2D particleTexture) : base(particleTexture, Vector2.Zero) { }
+
+        public void Play(Rectangle field, int parts, Vector2 direction, Color tint)
+        {
+            direction.Normalize();
+            direction *= 2;
+
+            Particles.Add(new BaseParticle(ParticleTexture, new Vector2(field.Left + MARGIN, field.Top + MARGIN), direction.Rotate(Game1.RNG.NextSingle(-0.25f, 0.25f)), tint, rotationSpeed: Game1.RNG.NextSingle(-0.1f, 0.1f), scale: 9, scaleDelta: -0.1f, opacity: 1f, opacityDelta: -0.02f));
+            Particles.Add(new BaseParticle(ParticleTexture, new Vector2(field.Right - MARGIN, field.Top + MARGIN), direction.Rotate(Game1.RNG.NextSingle(-0.25f, 0.25f)), tint, rotationSpeed: Game1.RNG.NextSingle(-0.1f, 0.1f), scale: 9, scaleDelta: -0.1f, opacity: 1f, opacityDelta: -0.02f));
+            Particles.Add(new BaseParticle(ParticleTexture, new Vector2(field.Right - MARGIN, field.Bottom - MARGIN), direction.Rotate(Game1.RNG.NextSingle(-0.25f, 0.25f)), tint, rotationSpeed: Game1.RNG.NextSingle(-0.1f, 0.1f), scale: 9, scaleDelta: -0.1f, opacity: 1f, opacityDelta: -0.02f));
+            Particles.Add(new BaseParticle(ParticleTexture, new Vector2(field.Left + MARGIN, field.Bottom - MARGIN), direction.Rotate(Game1.RNG.NextSingle(-0.25f, 0.25f)), tint, rotationSpeed: Game1.RNG.NextSingle(-0.1f, 0.1f), scale: 9, scaleDelta: -0.1f, opacity: 1f, opacityDelta: -0.02f));
+
+            for (var i = 0; i < parts; i++)
+            {
+                var randomLoc = field.Location + new Point(Game1.RNG.Next(MARGIN, field.Width - MARGIN * 2),
+                    Game1.RNG.Next(MARGIN, field.Height - MARGIN * 2));
+                var size = Game1.RNG.NextSingle(4f, 13f);
+                var fallSpeed = direction * size / 10;
+                Particles.Add(new BaseParticle(ParticleTexture, randomLoc.ToVector2(), fallSpeed.Rotate(Game1.RNG.NextSingle(-0.25f, 0.25f)), tint, rotationSpeed: Game1.RNG.NextSingle(-0.1f, 0.1f), scale: size, scaleDelta: -0.01f, opacity: 0.75f, opacityDelta: -0.01f, timeToLive: 2));
+            }
+        }
+    }
+
 }

@@ -8,6 +8,7 @@ namespace BatChrome
 {
     enum BrickState
     {
+        Spawning,
         Alive,
         Dying,
         Dead

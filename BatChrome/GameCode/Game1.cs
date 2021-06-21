@@ -88,7 +88,8 @@ namespace BatChrome
         private SelectedEasing _selectedEasing;
         private SelectedBat _selectedBat;
         private SelectedBall _selectedBall;
-        private bool _impactEmitter;
+        private bool _impactsOn;
+        private bool _shattersOn;
         #endregion
 
         #region Art Sources
@@ -106,8 +107,10 @@ namespace BatChrome
         private Bat bat;
         private List<Ball> balls;
 
-        private Point gridTL, gridSpacing, gridSize;
-        private List<List<Brick>> brickGrid;
+        private Point _gridTl, _gridSpacing, _gridSize;
+        private List<List<Brick>> _brickGrid;
+
+        private ShatterEmitter _shatterEmitter;
 
         private readonly int[,] LEVEL1 = 
         {
@@ -145,11 +148,13 @@ namespace BatChrome
             _wallHitFX = new List<SoundEffect>();
 
 
-            gridTL = new Point(100, 50);
-            gridSpacing = new Point(50, 32);
-            gridSize = new Point(LEVEL1.GetLength(1), LEVEL1.GetLength(0));
+            _gridTl = new Point(100, 50);
+            _gridSpacing = new Point(50, 32);
+            _gridSize = new Point(LEVEL1.GetLength(1), LEVEL1.GetLength(0));
 
-            brickGrid = new List<List<Brick>>();
+            _brickGrid = new List<List<Brick>>();
+
+            _shatterEmitter = new ShatterEmitter(Pixel);
 
             balls = new List<Ball>();
 
@@ -187,7 +192,8 @@ namespace BatChrome
             _selectedBat = SelectedBat.Basic;
             _selectedFX = SelectedSoundFX.None;
             _selectedBall = SelectedBall.Basic;
-            _impactEmitter = false;
+            _impactsOn = false;
+            _shattersOn = false;
         }
 
         private void MaxDIPs()
@@ -198,7 +204,8 @@ namespace BatChrome
             _selectedBat = SelectedBat.Stagger;
             _selectedFX = SelectedSoundFX.Better;
             _selectedBall = SelectedBall.Trailing;
-            _impactEmitter = true;
+            _impactsOn = true;
+            _shattersOn = true;
         }
 
         private void InitLevel()
@@ -212,33 +219,33 @@ namespace BatChrome
         {
             if (_selectedEasing == SelectedEasing.None)
             {
-                for (var i = 0; i < gridSize.Y; i++)
+                for (var i = 0; i < _gridSize.Y; i++)
                 {
-                    brickGrid.Add(new List<Brick>());
-                    for (var j = 0; j < gridSize.X; j++)
+                    _brickGrid.Add(new List<Brick>());
+                    for (var j = 0; j < _gridSize.X; j++)
                     {
                         if (LEVEL1[i, j] != 0)
                         {
-                            var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
+                            var loc = new Point(_gridTl.X + _gridSpacing.X * j, _gridTl.Y + _gridSpacing.Y * i);
                             var newBrick = new Brick(loc, _brickTex);
                             if (_selectedColour > SelectedColour.None) 
                                 newBrick.SetTint(Palette.GetRandom(2));
 
-                            brickGrid[i].Add(newBrick);
+                            _brickGrid[i].Add(newBrick);
                         }
                     }
                 }
             }
             else
             {
-                for (var i = 0; i < gridSize.Y; i++)
+                for (var i = 0; i < _gridSize.Y; i++)
                 {
-                    brickGrid.Add(new List<Brick>());
-                    for (var j = 0; j < gridSize.X; j++)
+                    _brickGrid.Add(new List<Brick>());
+                    for (var j = 0; j < _gridSize.X; j++)
                     {
                         if (LEVEL1[i, j] != 0)
                         {
-                            var loc = new Point(gridTL.X + gridSpacing.X * j, gridTL.Y + gridSpacing.Y * i);
+                            var loc = new Point(_gridTl.X + _gridSpacing.X * j, _gridTl.Y + _gridSpacing.Y * i);
                             var newBrick = new Brick(new Point(loc.X, -32), _brickTex);
                             if (_selectedColour > SelectedColour.None) newBrick.SetTint(Palette.GetRandom(2));
 
@@ -274,7 +281,7 @@ namespace BatChrome
                                     throw new ArgumentOutOfRangeException();
                             }
 
-                            brickGrid[i].Add(newBrick);
+                            _brickGrid[i].Add(newBrick);
                         }
                     }
                 }
@@ -387,16 +394,16 @@ namespace BatChrome
                         switch (_selectedBall)
                         {
                             case SelectedBall.Basic:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX, false, false, false, _selectedFX, _impactEmitter));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX, false, false, false, _selectedFX, _impactsOn));
                                 break;
                             case SelectedBall.Jelly:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, false, false, _selectedFX, _impactEmitter));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, false, false, _selectedFX, _impactsOn));
                                 break;
                             case SelectedBall.Flashy:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, true, false, _selectedFX, _impactEmitter));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, true, false, _selectedFX, _impactsOn));
                                 break;
                             case SelectedBall.Trailing:
-                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, true, true, _selectedFX, _impactEmitter));
+                                balls.Add(new Ball(bat.CollRect.Center + new Point(0, -32), _ballTex, Pixel, _screenRes, _wallHitFX,true, true, true, _selectedFX, _impactsOn));
                                 break;
                             default:
                                 throw new ArgumentOutOfRangeException();
@@ -448,19 +455,19 @@ namespace BatChrome
 
                 #region Brick / ball collision
 
-                for (var i = brickGrid.Count - 1; i >= 0; i--)
+                for (var i = _brickGrid.Count - 1; i >= 0; i--)
                 {
-                    for (var j = brickGrid[i].Count - 1; j >= 0; j--)
+                    for (var j = _brickGrid[i].Count - 1; j >= 0; j--)
                     {
-                        if (brickGrid[i][j].State == BrickState.Dead)
+                        if (_brickGrid[i][j].State == BrickState.Dead)
                         {
-                            brickGrid[i].RemoveAt(j);
+                            _brickGrid[i].RemoveAt(j);
                             break;
                         }
 
-                        if (ball.CollRect.Intersects(brickGrid[i][j].CollRect))
+                        if (ball.CollRect.Intersects(_brickGrid[i][j].CollRect))
                         {
-                            var overlap = Rectangle.Intersect(ball.CollRect, brickGrid[i][j].CollRect);
+                            var overlap = Rectangle.Intersect(ball.CollRect, _brickGrid[i][j].CollRect);
                             if (overlap.Width < overlap.Height)
                                 ball.ReverseX();
                             else
@@ -468,9 +475,12 @@ namespace BatChrome
 
                             brickHit();
                             if (_selectedColour == SelectedColour.Reactive)
-                                ball.SetTint(brickGrid[i][j].GetTint());
+                                ball.SetTint(_brickGrid[i][j].GetTint());
 
-                            brickGrid[i][j].State = BrickState.Dead;
+                            if (_shattersOn)
+                                _shatterEmitter.Play(_brickGrid[i][j].CollRect, 6, new Vector2(0, 1), _brickGrid[i][j].GetTint());
+
+                            _brickGrid[i][j].State = BrickState.Dead;
                         }
                     }
                 }
@@ -570,11 +580,16 @@ namespace BatChrome
 
             if (kb.WasKeyJustDown(Keys.NumPad6))
             {
-                _impactEmitter = !_impactEmitter;
+                _impactsOn = !_impactsOn;
                 foreach (var ball in balls)
                 {
-                    ball.ImpactEmitter = _impactEmitter;
+                    ball.ImpactEmitter = _impactsOn;
                 }
+            }
+
+            if (kb.WasKeyJustDown(Keys.NumPad7))
+            {
+                _shattersOn = !_shattersOn;
             }
 
             #endregion
@@ -583,7 +598,7 @@ namespace BatChrome
 
         private void Reset()
         {
-            brickGrid.Clear();
+            _brickGrid.Clear();
             balls.Clear();
 
             InitLevel();
@@ -600,7 +615,7 @@ namespace BatChrome
                 ball.SetTint(Palette.GetColor(usedList++));
             }
 
-            foreach (var brickLine in brickGrid)
+            foreach (var brickLine in _brickGrid)
             {
                 foreach (var brick in brickLine)
                 {
@@ -619,7 +634,7 @@ namespace BatChrome
                 ball.SetTint(Color.White);
             }
 
-            foreach (var brickLine in brickGrid)
+            foreach (var brickLine in _brickGrid)
             {
                 foreach (var brick in brickLine)
                 {
@@ -631,6 +646,8 @@ namespace BatChrome
 
         protected override void Draw(GameTime gameTime)
         {
+            var deltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
+
             GraphicsDevice.Clear(Color.DimGray);
 
             _spriteBatch.Begin();
@@ -639,20 +656,22 @@ namespace BatChrome
 
             bat.Draw(_spriteBatch);
 
+            #region Draw balls
+            foreach (var ball in balls)
+            {
+                ball.Draw(_spriteBatch, deltaTime);
+            }
+            #endregion
+
+            _shatterEmitter.Draw(_spriteBatch, deltaTime);
+
             #region Draw bricks
-            foreach (var brickLine in brickGrid)
+            foreach (var brickLine in _brickGrid)
             {
                 foreach (var brick in brickLine)
                 {
                     brick.Draw(_spriteBatch);
                 }
-            }
-            #endregion
-
-            #region Draw balls
-            foreach (var ball in balls)
-            {
-                ball.Draw(_spriteBatch, (float) gameTime.ElapsedGameTime.TotalSeconds);
             }
             #endregion
 
@@ -675,7 +694,8 @@ namespace BatChrome
                 "NP3: Easing-",
                 "NP4: Bat-",
                 "NP5: Ball-",
-                "NP6: Impacts-",
+                "NP6: Impact-",
+                "NP7: Shatter-",
             };
 
             for (i = 0; i < 3; i++, y++)
@@ -699,7 +719,11 @@ namespace BatChrome
 
             x += 170;
             y = 0;
-            _spriteBatch.DrawString(_uiFont, uiText[i++] + _impactEmitter, _uiTL + new Vector2(x, y), Color.White);
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _impactsOn, _uiTL + new Vector2(x, y), Color.White);
+
+            y += _uiFont.LineSpacing;
+            _spriteBatch.DrawString(_uiFont, uiText[i++] + _shattersOn, _uiTL + new Vector2(x, y), Color.White);
+
         }
     }
 }
