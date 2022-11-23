@@ -224,15 +224,14 @@ namespace BatChrome
                     _brickGrid.Add(new List<Brick>());
                     for (var j = 0; j < _gridSize.X; j++)
                     {
-                        if (LEVEL1[i, j] != 0)
-                        {
-                            var loc = new Point(_gridTl.X + _gridSpacing.X * j, _gridTl.Y + _gridSpacing.Y * i);
-                            var newBrick = new Brick(loc, _brickTex);
-                            if (_selectedColour > SelectedColour.None) 
-                                newBrick.SetTint(Palette.GetRandom(2));
+                        if (LEVEL1[i, j] == 0) continue;
 
-                            _brickGrid[i].Add(newBrick);
-                        }
+                        var loc = new Point(_gridTl.X + _gridSpacing.X * j, _gridTl.Y + _gridSpacing.Y * i);
+                        var newBrick = new Brick(loc, _brickTex);
+                        if (_selectedColour > SelectedColour.None) 
+                            newBrick.SetTint(Palette.GetRandom(2));
+
+                        _brickGrid[i].Add(newBrick);
                     }
                 }
             }
@@ -243,46 +242,45 @@ namespace BatChrome
                     _brickGrid.Add(new List<Brick>());
                     for (var j = 0; j < _gridSize.X; j++)
                     {
-                        if (LEVEL1[i, j] != 0)
+                        if (LEVEL1[i, j] == 0) continue;
+
+                        var loc = new Point(_gridTl.X + _gridSpacing.X * j, _gridTl.Y + _gridSpacing.Y * i);
+                        var newBrick = new Brick(new Point(loc.X, -32), _brickTex);
+                        if (_selectedColour > SelectedColour.None) newBrick.SetTint(Palette.GetRandom(2));
+
+                        switch (_selectedEasing)
                         {
-                            var loc = new Point(_gridTl.X + _gridSpacing.X * j, _gridTl.Y + _gridSpacing.Y * i);
-                            var newBrick = new Brick(new Point(loc.X, -32), _brickTex);
-                            if (_selectedColour > SelectedColour.None) newBrick.SetTint(Palette.GetRandom(2));
-
-                            switch (_selectedEasing)
-                            {
-                                case SelectedEasing.None:
-                                    throw new ArgumentOutOfRangeException();
-                                case SelectedEasing.Linear:
-                                    _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
-                                            expression: tBrick => newBrick.Position,
-                                            toValue: loc.ToVector2(), duration: 1, delay: 0)
-                                        .Easing(EasingFunctions.Linear);
-                                    break;
-                                case SelectedEasing.Quintic:
-                                    _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
-                                            expression: tBrick => newBrick.Position,
-                                            toValue: loc.ToVector2(), duration: 1, delay: 0)
-                                        .Easing(EasingFunctions.QuinticIn);
-                                    break;
-                                case SelectedEasing.Bounce:
-                                    _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
-                                            expression: tBrick => newBrick.Position,
-                                            toValue: loc.ToVector2(), duration: 1, delay: 0)
-                                        .Easing(EasingFunctions.BounceOut);
-                                    break;
-                                case SelectedEasing.BouncePlusRandom:
-                                    _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
-                                            expression: tBrick => newBrick.Position,
-                                            toValue: loc.ToVector2(), duration: 1, delay: (float) RNG.NextDouble())
-                                        .Easing(EasingFunctions.BounceOut);
-                                    break;
-                                default:
-                                    throw new ArgumentOutOfRangeException();
-                            }
-
-                            _brickGrid[i].Add(newBrick);
+                            case SelectedEasing.None:
+                                throw new ArgumentOutOfRangeException();
+                            case SelectedEasing.Linear:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
+                                        expression: tBrick => newBrick.Position,
+                                        toValue: loc.ToVector2(), duration: 1, delay: 0)
+                                    .Easing(EasingFunctions.Linear);
+                                break;
+                            case SelectedEasing.Quintic:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
+                                        expression: tBrick => newBrick.Position,
+                                        toValue: loc.ToVector2(), duration: 1, delay: 0)
+                                    .Easing(EasingFunctions.QuinticIn);
+                                break;
+                            case SelectedEasing.Bounce:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
+                                        expression: tBrick => newBrick.Position,
+                                        toValue: loc.ToVector2(), duration: 1, delay: 0)
+                                    .Easing(EasingFunctions.BounceOut);
+                                break;
+                            case SelectedEasing.BouncePlusRandom:
+                                _tweener.TweenTo<GameObject, Vector2>(target: newBrick,
+                                        expression: tBrick => newBrick.Position,
+                                        toValue: loc.ToVector2(), duration: 1, delay: (float) RNG.NextDouble())
+                                    .Easing(EasingFunctions.BounceOut);
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
                         }
+
+                        _brickGrid[i].Add(newBrick);
                     }
                 }
             }
@@ -335,7 +333,7 @@ namespace BatChrome
             if (_selectedColour > SelectedColour.None) bat.SetTint(Palette.GetColor(0));
         }
 
-        void brickHit()
+        void BrickHit()
         {
             switch (_selectedFX)
             {
@@ -354,7 +352,7 @@ namespace BatChrome
             }
         }
 
-        void batHit()
+        void BatHit()
         {
             switch (_selectedFX)
             {
@@ -445,7 +443,7 @@ namespace BatChrome
                             bat.Displace += ball.Velocity.NormalizedCopy() * 16;
                         ball.ReverseY();
                     }
-                    batHit();
+                    BatHit();
                     if (_selectedColour == SelectedColour.Reactive)
                         ball.SetTint(bat.GetTint());
 
@@ -473,7 +471,7 @@ namespace BatChrome
                             else
                                 ball.ReverseY();
 
-                            brickHit();
+                            BrickHit();
                             if (_selectedColour == SelectedColour.Reactive)
                                 ball.SetTint(_brickGrid[i][j].GetTint());
 
